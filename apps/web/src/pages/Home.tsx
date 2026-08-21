@@ -1,13 +1,9 @@
 import type { ExpiryOption, PasteLanguage } from '@psh/shared'
-import {
-  EXPIRY_OPTIONS,
-
-  PASTE_LANGUAGES,
-
-} from '@psh/shared'
+import { EXPIRY_OPTIONS, PASTE_LANGUAGES } from '@psh/shared'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { toast } from 'sonner'
+import { CodeEditor } from '@/components/CodeEditor'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { ThemeSwitcher } from '@/components/ThemeSwitcher'
 import { Button } from '@/components/ui/button'
@@ -22,7 +18,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { Textarea } from '@/components/ui/textarea'
 import { createPaste } from '@/lib/api'
 import { useI18n } from '@/lib/i18n'
 
@@ -126,13 +121,13 @@ export function Home() {
 
               <div className="flex flex-col gap-2">
                 <Label htmlFor="content">{t('field.content')}</Label>
-                <Textarea
+                <CodeEditor
                   id="content"
                   value={content}
-                  onChange={e => setContent(e.target.value)}
+                  onChange={setContent}
+                  language={language}
+                  ariaLabel={t('field.content')}
                   placeholder={t('placeholder.content')}
-                  className="min-h-64 font-mono"
-                  spellCheck={false}
                 />
                 <p className="text-muted-foreground text-right text-xs">
                   {t('bytes.counter', { count: contentBytes.toLocaleString(locale === 'zh' ? 'zh-CN' : 'en-US') })}
