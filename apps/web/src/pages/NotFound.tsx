@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { ThemeSwitcher } from '@/components/ThemeSwitcher'
 import { Button } from '@/components/ui/button'
 import { useI18n } from '@/lib/i18n'
 
@@ -8,7 +9,10 @@ export function NotFound() {
 
   return (
     <main className="bg-background flex min-h-dvh flex-col items-center justify-center gap-6 px-4 text-center">
-      <LanguageSwitcher />
+      <div className="flex items-center gap-2">
+        <ThemeSwitcher />
+        <LanguageSwitcher />
+      </div>
       <div className="flex flex-col gap-2">
         <h1 className="text-7xl font-bold tracking-tight">{t('notFound.code')}</h1>
         <p className="text-muted-foreground">{t('notFound.description')}</p>

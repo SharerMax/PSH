@@ -11,6 +11,7 @@ import { Link, useParams } from 'react-router'
 import { codeToHtml } from 'shiki'
 import { toast } from 'sonner'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { ThemeSwitcher } from '@/components/ThemeSwitcher'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -227,6 +228,7 @@ export function PasteView() {
             </Link>
             <div className="flex items-center gap-2">
               <span className="font-mono text-xs">{id}</span>
+              <ThemeSwitcher />
               <LanguageSwitcher />
             </div>
           </div>
