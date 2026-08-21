@@ -1,0 +1,20 @@
+{
+  "name": "psh",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --parallel --filter @psh/server --filter @psh/web dev",
+    "build": "pnpm --filter @psh/web build",
+    "start": "pnpm --filter @psh/server start",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "catalog:",
+    "eslint": "catalog:",
+    "eslint-plugin-format": "^1.1.0",
+    "typescript": "6.0.3"
+  }
+}

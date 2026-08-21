@@ -1,0 +1,26 @@
+node_modules/
+dist/
+*.local
+*.log
+
+# database
+data/
+*.db
+*.db-journal
+*.sqlite
+
+# env
+.env
+.env.*
+!.env.example
+
+# editor/os
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# local agent tooling
+.agents/
+skills-lock.json
