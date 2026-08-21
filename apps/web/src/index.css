@@ -3,6 +3,13 @@
 @import './shadcn.css';
 @import '@fontsource-variable/inter';
 
+/* keep shadcn/ui sources pristine: shrink button icons globally instead
+   of editing components/ui/button.tsx (unlayered rule wins over utilities) */
+[data-slot='button'] svg:not([class*='size-']) {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
