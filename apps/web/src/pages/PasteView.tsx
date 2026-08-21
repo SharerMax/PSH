@@ -228,8 +228,8 @@ export function PasteView() {
             </Link>
             <div className="flex items-center gap-2">
               <span className="font-mono text-xs">{id}</span>
-              <ThemeSwitcher />
               <LanguageSwitcher />
+              <ThemeSwitcher />
             </div>
           </div>
           <h1 className="truncate text-3xl font-bold tracking-tight">

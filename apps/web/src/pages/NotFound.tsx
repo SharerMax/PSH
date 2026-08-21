@@ -10,8 +10,8 @@ export function NotFound() {
   return (
     <main className="bg-background flex min-h-dvh flex-col items-center justify-center gap-6 px-4 text-center">
       <div className="flex items-center gap-2">
-        <ThemeSwitcher />
         <LanguageSwitcher />
+        <ThemeSwitcher />
       </div>
       <div className="flex flex-col gap-2">
         <h1 className="text-7xl font-bold tracking-tight">{t('notFound.code')}</h1>

@@ -85,8 +85,8 @@ export function Home() {
             <p className="text-muted-foreground text-sm">{t('app.tagline')}</p>
           </div>
           <div className="flex items-center gap-2">
-            <ThemeSwitcher />
             <LanguageSwitcher />
+            <ThemeSwitcher />
           </div>
         </header>
 
