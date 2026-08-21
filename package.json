@@ -1,8 +1,8 @@
 {
   "name": "psh",
+  "type": "module",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "scripts": {
     "dev": "pnpm --parallel --filter @psh/server --filter @psh/web dev",
     "build": "pnpm --filter @psh/web build",
@@ -13,8 +13,11 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "catalog:",
+    "@eslint-react/eslint-plugin": "catalog:",
     "eslint": "catalog:",
-    "eslint-plugin-format": "^1.1.0",
-    "typescript": "6.0.3"
+    "eslint-plugin-format": "catalog:",
+    "eslint-plugin-jsx-a11y": "catalog:",
+    "eslint-plugin-react-refresh": "catalog:",
+    "typescript": "catalog:"
   }
 }

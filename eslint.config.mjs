@@ -28,11 +28,14 @@ export default antfu(
   {
     files: ['apps/web/src/**/*.{ts,tsx}'],
     plugins: {
+      'jsx-a11y': jsxA11y,
       'react-refresh': reactRefresh,
     },
     rules: {
       ...jsxA11y.flatConfigs.recommended.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      // shiki returns pre-rendered HTML for syntax highlighting
+      'react/dom-no-dangerously-set-innerhtml': 'off',
     },
   },
 
@@ -43,14 +46,18 @@ export default antfu(
       'style/no-null-reason': 'off',
       'ts/no-explicit-any': 'off',
       'eslint-react/no-spreading-props': 'off',
+      'react-refresh/only-export-components': 'off',
+      // Base UI Label associates controls at runtime via context
+      'jsx-a11y/label-has-associated-control': 'off',
     },
   },
 
-  // server: allow node-style process env access
+  // server: process globals and startup logging are intentional
   {
-    files: ['apps/server/src/**/*.ts'],
+    files: ['apps/server/src/**/*.ts', 'apps/server/drizzle.config.ts'],
     rules: {
-      'node/prefer-global/process': 'error',
+      'node/prefer-global/process': 'off',
+      'no-console': 'off',
     },
   },
 )

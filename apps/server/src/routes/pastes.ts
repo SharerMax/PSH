@@ -1,18 +1,19 @@
-import { eq } from 'drizzle-orm'
-import { Hono } from 'hono'
+import type { ExpiryOption, PasteContent, PasteMeta } from '@psh/shared'
+import type { NewPasteRow, PasteRow } from '../db/schema'
 import { zValidator } from '@hono/zod-validator'
 import {
+
   pasteCreateInputSchema,
   pasteIdParamsSchema,
-  type ExpiryOption,
-  type PasteContent,
-  type PasteMeta,
+
 } from '@psh/shared'
+import { eq } from 'drizzle-orm'
+import { Hono } from 'hono'
 import { db } from '../db'
-import { pastes, type NewPasteRow, type PasteRow } from '../db/schema'
+import { pastes } from '../db/schema'
 import {
-  DecryptionError,
   decryptContent,
+  DecryptionError,
   encryptContent,
   hashPassword,
   verifyPassword,
@@ -74,9 +75,9 @@ function getLiveRow(id: string): PasteRow | null {
   return row
 }
 
-export type ReadResult =
-  | { ok: true; row: PasteRow; content: string }
-  | { ok: false; status: 400 | 401 | 404; message: string }
+export type ReadResult
+  = | { ok: true, row: PasteRow, content: string }
+    | { ok: false, status: 400 | 401 | 404, message: string }
 
 /**
  * Shared read path for the JSON content endpoint and the raw endpoint:

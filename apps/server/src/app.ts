@@ -30,7 +30,7 @@ export function createApp(): Hono {
     })
   }
   else {
-    app.notFound((c) => c.text('Not found', 404))
+    app.notFound(c => c.text('Not found', 404))
   }
 
   app.onError((error, c) => {

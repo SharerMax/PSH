@@ -60,7 +60,7 @@ export const pasteContentSchema = z.object({
 export type PasteContent = z.infer<typeof pasteContentSchema>
 
 export const pasteIdParamsSchema = z.object({
-  id: z.string().regex(/^[A-Za-z0-9_-]{8}$/, 'invalid paste id'),
+  id: z.string().regex(/^[\w-]{8}$/, 'invalid paste id'),
 })
 export type PasteIdParams = z.infer<typeof pasteIdParamsSchema>
 
