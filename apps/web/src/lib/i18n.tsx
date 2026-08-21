@@ -61,6 +61,9 @@ const en = {
   'toast.downloadStarted': 'Download started',
   'notFound.code': '404',
   'notFound.description': 'This page does not exist.',
+  'code.theme.auto': 'Auto',
+  'code.theme.light': 'Light code theme',
+  'code.theme.dark': 'Dark code theme',
 } as const
 
 const zh: Record<TranslationKey, string> = {
@@ -118,6 +121,9 @@ const zh: Record<TranslationKey, string> = {
   'toast.downloadStarted': '开始下载',
   'notFound.code': '404',
   'notFound.description': '页面不存在。',
+  'code.theme.auto': '自动',
+  'code.theme.light': '浅色代码主题',
+  'code.theme.dark': '深色代码主题',
 }
 
 const dictionaries: Record<Locale, Record<TranslationKey, string>> = { en, zh }

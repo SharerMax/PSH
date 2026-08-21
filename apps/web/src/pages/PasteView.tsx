@@ -5,7 +5,11 @@ import {
   ExternalLinkIcon,
   FlameKindlingIcon,
   LockIcon,
+  MonitorIcon,
+  MoonIcon,
+  SunIcon,
 } from 'lucide-react'
+import { useTheme } from 'next-themes'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { codeToHtml } from 'shiki'
@@ -36,13 +40,25 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ApiError, getPasteContent, getPasteMeta } from '@/lib/api'
 import { formatDuration, useI18n } from '@/lib/i18n'
 
-async function highlight(code: string, language: string): Promise<string> {
+type CodeThemeChoice = 'auto' | 'light' | 'dark'
+
+const CODE_THEME_OPTIONS: Array<{
+  value: CodeThemeChoice
+  labelKey: 'code.theme.auto' | 'code.theme.light' | 'code.theme.dark'
+  icon: typeof MonitorIcon
+}> = [
+  { value: 'auto', labelKey: 'code.theme.auto', icon: MonitorIcon },
+  { value: 'light', labelKey: 'code.theme.light', icon: SunIcon },
+  { value: 'dark', labelKey: 'code.theme.dark', icon: MoonIcon },
+]
+
+async function highlight(code: string, language: string, theme: string): Promise<string> {
   try {
-    return await codeToHtml(code, { lang: language, theme: 'github-dark-default' })
+    return await codeToHtml(code, { lang: language, theme })
   }
   catch {
     try {
-      return await codeToHtml(code, { lang: 'plaintext', theme: 'github-dark-default' })
+      return await codeToHtml(code, { lang: 'plaintext', theme })
     }
     catch {
       return ''
@@ -53,6 +69,7 @@ async function highlight(code: string, language: string): Promise<string> {
 export function PasteView() {
   const { id = '' } = useParams()
   const { t, locale } = useI18n()
+  const { resolvedTheme } = useTheme()
 
   const [phase, setPhase] = useState<'loading' | 'gone' | 'ready'>('loading')
   const [meta, setMeta] = useState<PasteMeta | null>(null)
@@ -63,6 +80,13 @@ export function PasteView() {
   const [passwordErrorKey, setPasswordErrorKey] = useState<'error.wrongPassword' | null>(null)
   const [submittingPassword, setSubmittingPassword] = useState(false)
   const [now, setNow] = useState(() => Date.now())
+  const [codeThemeChoice, setCodeThemeChoice] = useState<CodeThemeChoice>('auto')
+
+  // 'auto' follows the page theme; otherwise the explicit choice wins
+  const effectiveCodeTheme
+    = (codeThemeChoice === 'auto' ? resolvedTheme ?? 'light' : codeThemeChoice) === 'dark'
+      ? 'github-dark-default'
+      : 'github-light-default'
 
   // guards against StrictMode double-invocation burning a paste twice
   const contentRequestedRef = useRef(false)
@@ -71,7 +95,6 @@ export function PasteView() {
     try {
       const payload = await getPasteContent(pasteId, pastePassword)
       setContent(payload.content)
-      setHighlightedHtml(await highlight(payload.content, payload.language))
       setPasswordDialogOpen(false)
       setPasswordErrorKey(null)
       return true
@@ -85,6 +108,21 @@ export function PasteView() {
       return false
     }
   }, [])
+
+  useEffect(() => {
+    if (content === null || !meta) {
+      return
+    }
+    let cancelled = false
+    highlight(content, meta.language, effectiveCodeTheme).then((html) => {
+      if (!cancelled) {
+        setHighlightedHtml(html)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [content, meta?.language, effectiveCodeTheme])
 
   useEffect(() => {
     let cancelled = false
@@ -301,24 +339,43 @@ export function PasteView() {
                 </CardContent>
               </Card>
             )
-          : highlightedHtml
-            ? (
-                <Card className="overflow-hidden p-0">
-                  <CardContent className="p-0">
-                    <div
-                      className="[&_pre]:m-0 [&_pre]:overflow-x-auto [&_pre]:rounded-none [&_pre]:p-4 [&_pre]:text-sm [&_pre]:leading-relaxed"
-                      dangerouslySetInnerHTML={{ __html: highlightedHtml }}
-                    />
-                  </CardContent>
-                </Card>
-              )
-            : (
-                <Card className="p-0">
-                  <CardContent className="p-0">
-                    <pre className="bg-card overflow-x-auto p-4 font-mono text-sm leading-relaxed">{content}</pre>
-                  </CardContent>
-                </Card>
-              )}
+          : (
+              <div className="relative">
+                <div className="bg-background/80 border-border/60 absolute top-2 right-2 z-10 flex items-center gap-0.5 rounded-md border p-0.5 backdrop-blur-sm">
+                  {CODE_THEME_OPTIONS.map(({ value, labelKey, icon: Icon }) => (
+                    <Button
+                      key={value}
+                      size="icon-xs"
+                      variant={codeThemeChoice === value ? 'secondary' : 'ghost'}
+                      aria-label={t(labelKey)}
+                      title={t(labelKey)}
+                      onClick={() => setCodeThemeChoice(value)}
+                    >
+                      <Icon />
+                    </Button>
+                  ))}
+                </div>
+
+                {highlightedHtml
+                  ? (
+                      <Card className="overflow-hidden p-0">
+                        <CardContent className="p-0">
+                          <div
+                            className="[&_pre]:m-0 [&_pre]:overflow-x-auto [&_pre]:rounded-none [&_pre]:p-4 [&_pre]:text-sm [&_pre]:leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: highlightedHtml }}
+                          />
+                        </CardContent>
+                      </Card>
+                    )
+                  : (
+                      <Card className="p-0">
+                        <CardContent className="p-0">
+                          <pre className="bg-card overflow-x-auto p-4 font-mono text-sm leading-relaxed">{content}</pre>
+                        </CardContent>
+                      </Card>
+                    )}
+              </div>
+            )}
 
         <Dialog open={passwordDialogOpen} onOpenChange={handleDialogOpenChange}>
           <DialogContent showCloseButton={false}>
