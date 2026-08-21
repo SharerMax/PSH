@@ -61,9 +61,9 @@ Create body:
 ```jsonc
 {
   "title": "optional title",
-  "language": "typescript",        // default plaintext
-  "content": "...",                // required, max 1 MB
-  "expiresIn": "1h",               // 10min | 1h | 1d | 7d | forever
+  "language": "typescript", // default plaintext
+  "content": "...", // required, max 1 MB
+  "expiresIn": "1h", // 10min | 1h | 1d | 7d | forever
   "password": "optional",
   "burnAfterRead": false
 }

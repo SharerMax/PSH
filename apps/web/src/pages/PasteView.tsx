@@ -281,7 +281,6 @@ export function PasteView() {
             <CopyIcon data-icon="inline-start" />
             Copy link
           </Button>
-          {/* eslint-disable-next-line jsx-a11y/anchor-has-content -- content is passed through the Button render prop */}
           <Button size="sm" variant="outline" render={<a href={rawHref} target="_blank" rel="noreferrer" />}>
             <ExternalLinkIcon data-icon="inline-start" />
             Raw
