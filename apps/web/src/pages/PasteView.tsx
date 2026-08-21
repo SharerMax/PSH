@@ -10,6 +10,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { codeToHtml } from 'shiki'
 import { toast } from 'sonner'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -32,20 +33,7 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ApiError, getPasteContent, getPasteMeta } from '@/lib/api'
-
-function formatRemaining(ms: number): string {
-  const totalSeconds = Math.max(0, Math.floor(ms / 1000))
-  const days = Math.floor(totalSeconds / 86400)
-  const hours = Math.floor((totalSeconds % 86400) / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-  const seconds = totalSeconds % 60
-
-  if (days > 0)
-    return `${days}d ${hours}h ${minutes}m`
-  if (hours > 0)
-    return `${hours}h ${minutes}m ${seconds}s`
-  return `${minutes}m ${seconds}s`
-}
+import { formatDuration, useI18n } from '@/lib/i18n'
 
 async function highlight(code: string, language: string): Promise<string> {
   try {
@@ -63,6 +51,7 @@ async function highlight(code: string, language: string): Promise<string> {
 
 export function PasteView() {
   const { id = '' } = useParams()
+  const { t, locale } = useI18n()
 
   const [phase, setPhase] = useState<'loading' | 'gone' | 'ready'>('loading')
   const [meta, setMeta] = useState<PasteMeta | null>(null)
@@ -70,7 +59,7 @@ export function PasteView() {
   const [highlightedHtml, setHighlightedHtml] = useState('')
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false)
   const [password, setPassword] = useState('')
-  const [passwordError, setPasswordError] = useState<string | null>(null)
+  const [passwordErrorKey, setPasswordErrorKey] = useState<'error.wrongPassword' | null>(null)
   const [submittingPassword, setSubmittingPassword] = useState(false)
   const [now, setNow] = useState(() => Date.now())
 
@@ -83,12 +72,12 @@ export function PasteView() {
       setContent(payload.content)
       setHighlightedHtml(await highlight(payload.content, payload.language))
       setPasswordDialogOpen(false)
-      setPasswordError(null)
+      setPasswordErrorKey(null)
       return true
     }
     catch (error) {
       if (error instanceof ApiError && error.status === 401) {
-        setPasswordError('Wrong password')
+        setPasswordErrorKey('error.wrongPassword')
         return false
       }
       setPhase('gone')
@@ -139,13 +128,13 @@ export function PasteView() {
     return () => clearInterval(timer)
   }, [])
 
-  async function handleCopyText(text: string, what: string) {
+  async function copyText(text: string, successMessage: string, failureMessage: string) {
     try {
       await navigator.clipboard.writeText(text)
-      toast.success(`${what} copied to clipboard`)
+      toast.success(successMessage)
     }
     catch {
-      toast.error(`Failed to copy ${what.toLowerCase()}`)
+      toast.error(failureMessage)
     }
   }
 
@@ -159,7 +148,7 @@ export function PasteView() {
     anchor.download = `${id}.txt`
     anchor.click()
     URL.revokeObjectURL(url)
-    toast.success('Download started')
+    toast.success(t('toast.downloadStarted'))
   }
 
   async function handlePasswordSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -169,9 +158,9 @@ export function PasteView() {
 
     setSubmittingPassword(true)
     try {
-      const ok = await loadContent(id, password)
-      if (ok) {
-        toast.success('Paste unlocked')
+      const unlocked = await loadContent(id, password)
+      if (unlocked) {
+        toast.success(t('toast.unlocked'))
         setPassword('')
       }
     }
@@ -186,7 +175,7 @@ export function PasteView() {
       return
     setPasswordDialogOpen(open)
     if (!open)
-      setPasswordError(null)
+      setPasswordErrorKey(null)
   }
 
   if (phase === 'gone') {
@@ -196,14 +185,14 @@ export function PasteView() {
           <CardHeader>
             <CardTitle className="flex items-center justify-center gap-2">
               <FlameKindlingIcon className="size-5" />
-              Nothing here
+              {t('view.goneTitle')}
             </CardTitle>
-            <CardDescription>
-              This paste does not exist, was destroyed after reading, or has expired.
-            </CardDescription>
+            <CardDescription>{t('view.goneDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
-            <Button render={<Link to="/" />}>Create a new paste</Button>
+            <Button nativeButton={false} render={<Link to="/" />}>
+              {t('action.createNew')}
+            </Button>
           </CardContent>
         </Card>
       </main>
@@ -232,33 +221,38 @@ export function PasteView() {
     <main className="bg-background min-h-dvh">
       <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-10">
         <header className="flex flex-col gap-2">
-          <div className="flex items-baseline justify-between gap-4">
+          <div className="flex items-center justify-between gap-4">
             <Link to="/" className="text-muted-foreground text-sm hover:underline">
               psh
             </Link>
-            <span className="font-mono text-xs">{id}</span>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-xs">{id}</span>
+              <LanguageSwitcher />
+            </div>
           </div>
           <h1 className="truncate text-3xl font-bold tracking-tight">
-            {meta.title ?? 'Untitled paste'}
+            {meta.title ?? t('view.untitled')}
           </h1>
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="secondary">{meta.language}</Badge>
-            {meta.hasPassword && <Badge variant="outline">password protected</Badge>}
+            {meta.hasPassword && (
+              <Badge variant="outline">{t('badge.passwordProtected')}</Badge>
+            )}
             {burned && (
               <Badge variant="destructive">
                 <FlameKindlingIcon className="size-3" />
-                destroyed after read
+                {t('badge.destroyedAfterRead')}
               </Badge>
             )}
-            {expiresAtTime === null && !burned && <Badge variant="secondary">never expires</Badge>}
+            {expiresAtTime === null && !burned && (
+              <Badge variant="secondary">{t('badge.neverExpires')}</Badge>
+            )}
             {expiresAtTime !== null && !expired && !burned && (
               <Badge variant="secondary">
-                expires in
-                {' '}
-                {formatRemaining(expiresAtTime - now)}
+                {t('badge.expiresIn', { time: formatDuration(expiresAtTime - now, locale) })}
               </Badge>
             )}
-            {expired && !burned && <Badge variant="destructive">expired</Badge>}
+            {expired && !burned && <Badge variant="destructive">{t('badge.expired')}</Badge>}
           </div>
         </header>
 
@@ -268,26 +262,31 @@ export function PasteView() {
           <Button
             size="sm"
             disabled={locked}
-            onClick={() => content !== null && handleCopyText(content, 'Content')}
+            onClick={() => content !== null && copyText(content, t('toast.copiedContent'), t('error.copyContent'))}
           >
             <CopyIcon data-icon="inline-start" />
-            Copy content
+            {t('action.copyContent')}
           </Button>
           <Button
             size="sm"
             variant="outline"
-            onClick={() => handleCopyText(window.location.href, 'Link')}
+            onClick={() => copyText(window.location.href, t('toast.copiedLink'), t('error.copyLink'))}
           >
             <CopyIcon data-icon="inline-start" />
-            Copy link
+            {t('action.copyLink')}
           </Button>
-          <Button size="sm" variant="outline" render={<a href={rawHref} target="_blank" rel="noreferrer" />}>
+          <Button
+            size="sm"
+            variant="outline"
+            nativeButton={false}
+            render={<a href={rawHref} target="_blank" rel="noreferrer" />}
+          >
             <ExternalLinkIcon data-icon="inline-start" />
-            Raw
+            {t('action.raw')}
           </Button>
           <Button size="sm" variant="outline" disabled={locked} onClick={handleDownload}>
             <DownloadIcon data-icon="inline-start" />
-            Download
+            {t('action.download')}
           </Button>
         </div>
 
@@ -296,7 +295,7 @@ export function PasteView() {
               <Card>
                 <CardContent className="text-muted-foreground flex items-center justify-center gap-2 p-10 text-sm">
                   <LockIcon className="size-4" />
-                  Content is hidden until you enter the correct password.
+                  {t('view.lockedNotice')}
                 </CardContent>
               </Card>
             )
@@ -322,14 +321,12 @@ export function PasteView() {
         <Dialog open={passwordDialogOpen} onOpenChange={handleDialogOpenChange}>
           <DialogContent showCloseButton={false}>
             <DialogHeader>
-              <DialogTitle>Password required</DialogTitle>
-              <DialogDescription>
-                This paste is protected. Enter the password to view its content.
-              </DialogDescription>
+              <DialogTitle>{t('dialog.passwordTitle')}</DialogTitle>
+              <DialogDescription>{t('dialog.passwordDescription')}</DialogDescription>
             </DialogHeader>
             <form onSubmit={handlePasswordSubmit} className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="paste-password">Password</Label>
+                <Label htmlFor="paste-password">{t('dialog.passwordLabel')}</Label>
                 <Input
                   id="paste-password"
                   type="password"
@@ -337,11 +334,11 @@ export function PasteView() {
                   onChange={e => setPassword(e.target.value)}
                   autoComplete="off"
                 />
-                {passwordError && <p className="text-destructive text-sm">{passwordError}</p>}
+                {passwordErrorKey && <p className="text-destructive text-sm">{t(passwordErrorKey)}</p>}
               </div>
               <DialogFooter>
                 <Button type="submit" disabled={!password || submittingPassword}>
-                  {submittingPassword ? 'Unlocking…' : 'Unlock'}
+                  {submittingPassword ? t('action.unlocking') : t('action.unlock')}
                 </Button>
               </DialogFooter>
             </form>
