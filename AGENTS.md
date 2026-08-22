@@ -68,6 +68,18 @@ pnpm --filter @psh/server db:generate   # regenerate drizzle migrations after sc
    (`POST /api/pastes`, `/api/pastes/:id/meta`, `/api/pastes/:id/content?password=`, `/raw/:id`)
 4. If web behavior changed: verify visually against the dev server on `:5173`
 
+## External references
+
+Authoritative LLM-friendly documentation for the UI stack. Fetch on demand instead of
+guessing component APIs:
+
+- shadcn/ui docs index: <https://ui.shadcn.com/llms.txt>
+- Base UI docs index (links are fetchable `.md` files): <https://base-ui.com/llms.txt>
+
+Prefer these over memorized Radix-era APIs — this project's `components/ui/**` are built on
+Base UI (`@base-ui/react`), whose conventions differ from Radix (`render=` instead of
+`asChild`, no `nativeButton` default on non-button renders, etc.).
+
 ## Git
 
 - Conventional Commits, English imperative subject ≤ 72 chars.
