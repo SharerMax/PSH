@@ -71,7 +71,7 @@ export function Home() {
 
   return (
     <main className="bg-background min-h-dvh">
-      <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-10">
+      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-10">
         <header className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-1">
             <Link to="/" className="text-3xl font-bold tracking-tight">
