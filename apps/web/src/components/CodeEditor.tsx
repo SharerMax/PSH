@@ -1,10 +1,7 @@
 import { useTheme } from 'next-themes'
 import { useEffect, useRef, useState } from 'react'
-import { codeToHtml } from 'shiki'
-import { cn } from '@/lib/utils'
 
-const HIGHLIGHT_DEBOUNCE_MS = 200
-const MAX_HIGHLIGHT_LENGTH = 50_000
+type MonacoNamespace = Awaited<ReturnType<typeof import('modern-monaco').init>>
 
 interface CodeEditorProps {
   id?: string
@@ -15,104 +12,127 @@ interface CodeEditorProps {
   ariaLabel?: string
 }
 
+let monacoPromise: Promise<MonacoNamespace> | null = null
+
+function loadMonaco(): Promise<MonacoNamespace> {
+  monacoPromise ??= import('modern-monaco').then(m =>
+    m.init({
+      themes: ['github-light-default', 'github-dark-default'],
+    }),
+  )
+  return monacoPromise
+}
+
 /**
- * A textarea with live shiki highlighting rendered behind it.
- * The textarea text becomes transparent while highlighted; the caret,
- * selection and IME behaviour stay fully native.
+ * Monaco-based code editor (esm-dev/modern-monaco).
+ * Editor modules load lazily on first mount; highlighting uses the same
+ * shiki themes as the viewer and follows the resolved page theme.
  */
 export function CodeEditor({ id, value, onChange, language, placeholder, ariaLabel }: CodeEditorProps) {
   const { resolvedTheme } = useTheme()
-  const [highlightedHtml, setHighlightedHtml] = useState('')
-  const backdropRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const monacoRef = useRef<MonacoNamespace | null>(null)
+  const editorRef = useRef<ReturnType<MonacoNamespace['editor']['create']> | null>(null)
+  const onChangeRef = useRef(onChange)
+  const [ready, setReady] = useState(false)
 
-  const theme = resolvedTheme === 'dark' ? 'github-dark-default' : 'github-light-default'
-  const highlightable = value.length > 0 && value.length <= MAX_HIGHLIGHT_LENGTH
+  const effectiveTheme = resolvedTheme === 'dark' ? 'github-dark-default' : 'github-light-default'
 
+  onChangeRef.current = onChange
+
+  // create the editor once on mount
   useEffect(() => {
-    if (!highlightable) {
-      setHighlightedHtml('')
+    let disposed = false
+
+    loadMonaco().then((monaco) => {
+      if (disposed || !containerRef.current) {
+        return
+      }
+      const editor = monaco.editor.create(containerRef.current, {
+        value,
+        language,
+        automaticLayout: true,
+        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+        fontSize: 14,
+        lineNumbers: 'off',
+        wordWrap: 'on',
+        scrollBeyondLastLine: false,
+        renderLineHighlight: 'none',
+        overviewRulerLanes: 0,
+        hideCursorInOverviewRuler: true,
+        stickyScroll: { enabled: false },
+        minimap: { enabled: false },
+        scrollbar: { verticalScrollbarSize: 8, horizontalScrollbarSize: 8 },
+        padding: { top: 8, bottom: 8 },
+      })
+      editor.onDidChangeModelContent(() => {
+        onChangeRef.current(editor.getModel()?.getValue() ?? '')
+      })
+
+      editorRef.current = editor
+      monacoRef.current = monaco
+      setReady(true)
+    })
+
+    return () => {
+      disposed = true
+      editorRef.current?.dispose()
+      editorRef.current = null
+      monacoRef.current = null
+    }
+  }, [])
+
+  // keep the model in sync with external value changes
+  useEffect(() => {
+    const model = editorRef.current?.getModel()
+    if (model && model.getValue() !== value) {
+      model.setValue(value)
+    }
+  }, [value])
+
+  // switch grammar when the language changes
+  useEffect(() => {
+    const monaco = monacoRef.current
+    const model = editorRef.current?.getModel()
+    if (!monaco || !model) {
       return
     }
-    let cancelled = false
-    const timer = setTimeout(() => {
-      async function run(): Promise<string> {
-        try {
-          return await codeToHtml(value, { lang: language, theme })
-        }
-        catch {
-          try {
-            return await codeToHtml(value, { lang: 'plaintext', theme })
-          }
-          catch {
-            return ''
-          }
-        }
+    try {
+      monaco.editor.setModelLanguage(model, language)
+    }
+    catch {
+      try {
+        monaco.editor.setModelLanguage(model, 'plaintext')
       }
-
-      run().then((html) => {
-        if (!cancelled && html) {
-          setHighlightedHtml(html)
-        }
-      })
-    }, HIGHLIGHT_DEBOUNCE_MS)
-    return () => {
-      clearTimeout(timer)
-      cancelled = true
+      catch {
+        // grammar unavailable; ignore
+      }
     }
-  }, [value, language, theme, highlightable])
+  }, [language])
 
-  function syncBackdropScroll(event: React.UIEvent<HTMLTextAreaElement>) {
-    const backdrop = backdropRef.current
-    if (backdrop) {
-      backdrop.scrollTop = event.currentTarget.scrollTop
-      backdrop.scrollLeft = event.currentTarget.scrollLeft
+  // follow the page theme
+  useEffect(() => {
+    if (!ready) {
+      return
     }
-  }
-
-  const sharedMetrics = 'w-full px-2.5 py-2 font-mono text-base whitespace-pre-wrap break-words md:text-sm'
+    monacoRef.current?.editor.setTheme(effectiveTheme)
+  }, [ready, effectiveTheme])
 
   return (
-    <div className="relative">
+    <div className="border-input relative min-h-64 w-full overflow-hidden rounded-md border shadow-xs transition-[color,box-shadow] focus-within:border-ring focus-within:ring-ring/50">
       <div
-        ref={backdropRef}
-        aria-hidden="true"
-        className={cn(
-          'border-input pointer-events-none absolute inset-0 overflow-hidden rounded-md',
-          sharedMetrics,
-        )}
-      >
-        {value === ''
-          ? placeholder
-            ? <span className="text-muted-foreground">{placeholder}</span>
-            : null
-          : highlightedHtml
-            ? (
-                <div
-                  className="[&_code]:whitespace-pre-wrap! [&_pre]:m-0! [&_pre]:bg-transparent! [&_pre]:p-0! [&_pre]:whitespace-pre-wrap!"
-                  dangerouslySetInnerHTML={{ __html: highlightedHtml }}
-                />
-              )
-            : null}
-      </div>
-
-      <textarea
+        ref={containerRef}
         id={id}
+        role="textbox"
+        aria-multiline="true"
         aria-label={ariaLabel}
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        onScroll={syncBackdropScroll}
-        spellCheck={false}
-        className={cn(
-          'min-h-64 shadow-xs transition-[color,box-shadow] outline-none',
-          'focus-visible:border-ring focus-visible:ring-ring/50 relative w-full resize-y rounded-md border',
-          'disabled:cursor-not-allowed disabled:opacity-50',
-          sharedMetrics,
-          'dark:bg-transparent!',
-          highlightedHtml
-            ? 'selection:bg-primary/30 caret-foreground text-transparent!'
-            : 'placeholder:text-muted-foreground',
-        )}
+        className="h-64 w-full"
       />
+      {!ready && (
+        <div className="text-muted-foreground pointer-events-none absolute inset-0 flex items-start p-3 font-mono text-sm">
+          {placeholder}
+        </div>
+      )}
     </div>
   )
 }
