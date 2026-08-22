@@ -108,7 +108,7 @@ export function Home() {
                 </p>
               </div>
 
-              <aside className="flex w-full shrink-0 flex-col gap-5 lg:w-80 xl:w-96">
+              <aside className="flex w-full shrink-0 flex-col gap-5 lg:w-65 xl:w-75">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="title">{t('field.title')}</Label>
                   <Input
