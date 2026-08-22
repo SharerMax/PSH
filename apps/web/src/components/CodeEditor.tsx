@@ -54,7 +54,7 @@ export function CodeEditor({ id, value, onChange, language, placeholder, ariaLab
         automaticLayout: true,
         fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
         fontSize: 14,
-        lineNumbers: 'off',
+        lineNumbers: 'on',
         wordWrap: 'on',
         scrollBeyondLastLine: false,
         renderLineHighlight: 'none',
