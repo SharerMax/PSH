@@ -91,35 +91,8 @@ export function Home() {
             <CardDescription>{t('home.description')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="title">{t('field.title')}</Label>
-                <Input
-                  id="title"
-                  value={title}
-                  onChange={e => setTitle(e.target.value)}
-                  placeholder={t('placeholder.untitled')}
-                  maxLength={200}
-                />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="language">{t('field.language')}</Label>
-                <Select value={language} onValueChange={value => setLanguage(value as PasteLanguage)}>
-                  <SelectTrigger id="language" className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PASTE_LANGUAGES.map(option => (
-                      <SelectItem key={option} value={option}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex flex-col gap-2">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-6 lg:flex-row lg:items-start" noValidate>
+              <div className="flex min-w-0 flex-1 flex-col gap-2">
                 <Label htmlFor="content">{t('field.content')}</Label>
                 <CodeEditor
                   id="content"
@@ -128,55 +101,85 @@ export function Home() {
                   language={language}
                   ariaLabel={t('field.content')}
                   placeholder={t('placeholder.content')}
+                  editorClassName="h-72 lg:h-[34rem]"
                 />
                 <p className="text-muted-foreground text-right text-xs">
                   {t('bytes.counter', { count: contentBytes.toLocaleString(locale === 'zh' ? 'zh-CN' : 'en-US') })}
                 </p>
               </div>
 
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="expiresIn">{t('field.expiresIn')}</Label>
-                <Select value={expiresIn} onValueChange={value => setExpiresIn(value as ExpiryOption)}>
-                  <SelectTrigger id="expiresIn" className="w-full">
-                    <SelectValue>{t(`expiry.${expiresIn}`)}</SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {EXPIRY_OPTIONS.map(option => (
-                      <SelectItem key={option} value={option}>
-                        {t(`expiry.${option}`)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="password">{t('field.password')}</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder={t('placeholder.password')}
-                  autoComplete="new-password"
-                />
-              </div>
-
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex flex-col">
-                  <Label htmlFor="burnAfterRead">{t('field.burnAfterRead')}</Label>
-                  <p className="text-muted-foreground text-xs">{t('description.burnAfterRead')}</p>
+              <aside className="flex w-full shrink-0 flex-col gap-5 lg:w-80 xl:w-96">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="title">{t('field.title')}</Label>
+                  <Input
+                    id="title"
+                    value={title}
+                    onChange={e => setTitle(e.target.value)}
+                    placeholder={t('placeholder.untitled')}
+                    maxLength={200}
+                  />
                 </div>
-                <Switch
-                  id="burnAfterRead"
-                  checked={burnAfterRead}
-                  onCheckedChange={setBurnAfterRead}
-                />
-              </div>
 
-              <Button type="submit" disabled={submitting} className="self-start">
-                {submitting ? t('action.creating') : t('action.create')}
-              </Button>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="language">{t('field.language')}</Label>
+                  <Select value={language} onValueChange={value => setLanguage(value as PasteLanguage)}>
+                    <SelectTrigger id="language" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PASTE_LANGUAGES.map(option => (
+                        <SelectItem key={option} value={option}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="expiresIn">{t('field.expiresIn')}</Label>
+                  <Select value={expiresIn} onValueChange={value => setExpiresIn(value as ExpiryOption)}>
+                    <SelectTrigger id="expiresIn" className="w-full">
+                      <SelectValue>{t(`expiry.${expiresIn}`)}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EXPIRY_OPTIONS.map(option => (
+                        <SelectItem key={option} value={option}>
+                          {t(`expiry.${option}`)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="password">{t('field.password')}</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder={t('placeholder.password')}
+                    autoComplete="new-password"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex flex-col">
+                    <Label htmlFor="burnAfterRead">{t('field.burnAfterRead')}</Label>
+                    <p className="text-muted-foreground text-xs">{t('description.burnAfterRead')}</p>
+                  </div>
+                  <Switch
+                    id="burnAfterRead"
+                    checked={burnAfterRead}
+                    onCheckedChange={setBurnAfterRead}
+                  />
+                </div>
+
+                <Button type="submit" disabled={submitting} className="w-full lg:mt-auto">
+                  {submitting ? t('action.creating') : t('action.create')}
+                </Button>
+              </aside>
             </form>
           </CardContent>
         </Card>

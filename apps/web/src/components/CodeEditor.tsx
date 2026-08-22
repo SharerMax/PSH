@@ -1,5 +1,6 @@
 import { useTheme } from 'next-themes'
 import { useEffect, useRef, useState } from 'react'
+import { cn } from '@/lib/utils'
 
 type MonacoNamespace = Awaited<ReturnType<typeof import('modern-monaco').init>>
 
@@ -10,6 +11,8 @@ interface CodeEditorProps {
   language: string
   placeholder?: string
   ariaLabel?: string
+  /** Extra classes for the editor surface, e.g. custom heights */
+  editorClassName?: string
 }
 
 let monacoPromise: Promise<MonacoNamespace> | null = null
@@ -28,7 +31,7 @@ function loadMonaco(): Promise<MonacoNamespace> {
  * Editor modules load lazily on first mount; highlighting uses the same
  * shiki themes as the viewer and follows the resolved page theme.
  */
-export function CodeEditor({ id, value, onChange, language, placeholder, ariaLabel }: CodeEditorProps) {
+export function CodeEditor({ id, value, onChange, language, placeholder, ariaLabel, editorClassName }: CodeEditorProps) {
   const { resolvedTheme } = useTheme()
   const containerRef = useRef<HTMLDivElement>(null)
   const monacoRef = useRef<MonacoNamespace | null>(null)
@@ -126,7 +129,7 @@ export function CodeEditor({ id, value, onChange, language, placeholder, ariaLab
         role="textbox"
         aria-multiline="true"
         aria-label={ariaLabel}
-        className="h-64 w-full"
+        className={cn('h-64 w-full', editorClassName)}
       />
       {!ready && (
         <div className="text-muted-foreground pointer-events-none absolute inset-0 flex items-start p-3 font-mono text-sm">
