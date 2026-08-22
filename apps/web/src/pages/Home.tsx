@@ -138,7 +138,7 @@ export function Home() {
                 <Label htmlFor="expiresIn">{t('field.expiresIn')}</Label>
                 <Select value={expiresIn} onValueChange={value => setExpiresIn(value as ExpiryOption)}>
                   <SelectTrigger id="expiresIn" className="w-full">
-                    <SelectValue />
+                    <SelectValue>{t(`expiry.${expiresIn}`)}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {EXPIRY_OPTIONS.map(option => (
