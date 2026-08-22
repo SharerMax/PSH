@@ -11,7 +11,9 @@ interface CodeEditorProps {
   language: string
   placeholder?: string
   ariaLabel?: string
-  /** Extra classes for the editor surface, e.g. custom heights */
+  /** Extra classes for the root wrapper, e.g. flex sizing */
+  className?: string
+  /** Extra classes for the editor surface */
   editorClassName?: string
 }
 
@@ -31,7 +33,7 @@ function loadMonaco(): Promise<MonacoNamespace> {
  * Editor modules load lazily on first mount; highlighting uses the same
  * shiki themes as the viewer and follows the resolved page theme.
  */
-export function CodeEditor({ id, value, onChange, language, placeholder, ariaLabel, editorClassName }: CodeEditorProps) {
+export function CodeEditor({ id, value, onChange, language, placeholder, ariaLabel, className, editorClassName }: CodeEditorProps) {
   const { resolvedTheme } = useTheme()
   const containerRef = useRef<HTMLDivElement>(null)
   const monacoRef = useRef<MonacoNamespace | null>(null)
@@ -122,14 +124,19 @@ export function CodeEditor({ id, value, onChange, language, placeholder, ariaLab
   }, [ready, effectiveTheme])
 
   return (
-    <div className="border-input relative min-h-64 w-full overflow-hidden rounded-md border shadow-xs transition-[color,box-shadow] focus-within:border-ring focus-within:ring-ring/50">
+    <div
+      className={cn(
+        'border-input relative min-h-64 w-full overflow-hidden rounded-md border shadow-xs transition-[color,box-shadow] focus-within:border-ring focus-within:ring-ring/50',
+        className,
+      )}
+    >
       <div
         ref={containerRef}
         id={id}
         role="textbox"
         aria-multiline="true"
         aria-label={ariaLabel}
-        className={cn('h-64 w-full', editorClassName)}
+        className={cn('absolute inset-0', editorClassName)}
       />
       {!ready && (
         <div className="text-muted-foreground pointer-events-none absolute inset-0 flex items-start p-3 font-mono text-sm">

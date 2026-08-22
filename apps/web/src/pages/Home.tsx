@@ -70,8 +70,8 @@ export function Home() {
   }
 
   return (
-    <main className="bg-background min-h-dvh">
-      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-10">
+    <main className="bg-background flex min-h-dvh flex-col">
+      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-10">
         <header className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-1">
             <Link to="/" className="text-3xl font-bold tracking-tight">
@@ -85,13 +85,13 @@ export function Home() {
           </div>
         </header>
 
-        <Card>
+        <Card className="flex flex-1 flex-col">
           <CardHeader>
             <CardTitle>{t('home.newPaste')}</CardTitle>
             <CardDescription>{t('home.description')}</CardDescription>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="flex flex-col gap-6 lg:flex-row lg:items-start" noValidate>
+          <CardContent className="flex flex-1 flex-col">
+            <form onSubmit={handleSubmit} className="flex flex-1 flex-col gap-6 lg:flex-row" noValidate>
               <div className="flex min-w-0 flex-1 flex-col gap-2">
                 <Label htmlFor="content">{t('field.content')}</Label>
                 <CodeEditor
@@ -101,7 +101,7 @@ export function Home() {
                   language={language}
                   ariaLabel={t('field.content')}
                   placeholder={t('placeholder.content')}
-                  editorClassName="h-72 lg:h-[34rem]"
+                  className="flex-1"
                 />
                 <p className="text-muted-foreground text-right text-xs">
                   {t('bytes.counter', { count: contentBytes.toLocaleString(locale === 'zh' ? 'zh-CN' : 'en-US') })}
