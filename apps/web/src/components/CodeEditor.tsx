@@ -60,6 +60,8 @@ export function CodeEditor({ id, value, onChange, language, placeholder, ariaLab
         fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
         fontSize: 14,
         lineNumbers: 'on',
+        lineNumbersMinChars: 4,
+        lineDecorationsWidth: 1.7,
         wordWrap: 'on',
         scrollBeyondLastLine: false,
         renderLineHighlight: 'none',
@@ -136,7 +138,11 @@ export function CodeEditor({ id, value, onChange, language, placeholder, ariaLab
         role="textbox"
         aria-multiline="true"
         aria-label={ariaLabel}
-        className={cn('absolute inset-0', editorClassName)}
+        className={cn(
+          'absolute inset-0',
+          editorClassName,
+          '[&_.margin-view-overlays]:bg-muted/40 [&_.line-numbers]:text-muted-foreground',
+        )}
       />
       {!ready && (
         <div className="text-muted-foreground pointer-events-none absolute inset-0 flex items-start p-3 font-mono text-sm">
