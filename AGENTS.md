@@ -34,6 +34,9 @@ pnpm --filter @psh/server db:generate   # regenerate drizzle migrations after sc
 - Build scripts are governed by `allowBuilds` in `pnpm-workspace.yaml`
   (`better-sqlite3: false` because it ships prebuilt bindings; building from source requires
   MSVC and will fail — do not enable it).
+- Supply-chain policy: `trustPolicyExclude: [semver@6.3.1]` exists because the `shadcn`
+  package's babel stack pins semver@6.3.1, which the default no-downgrade policy flags.
+  Do not remove the exclusion while `shadcn` is a dependency.
 
 ### Frontend (apps/web)
 
@@ -44,6 +47,10 @@ pnpm --filter @psh/server db:generate   # regenerate drizzle migrations after sc
   `useI18n()`). Both `en` and `zh` dictionaries must be updated together.
 - Theme handling uses `next-themes` (`ThemeProvider attribute="class"`, default `system`).
   Syntax highlighting follows the resolved theme: `github-light-default` / `github-dark-default`.
+- The paste editor (`components/CodeEditor.tsx`) is built on `modern-monaco`. Editor modules
+  load lazily as their own chunk — never add a `MonacoEnvironment` setup, worker config or
+  CSS imports for it. Gutter width is tuned via `lineNumbersMinChars` + `lineDecorationsWidth`
+  (pixel-level) to keep the numbers column at 48px.
 - Path alias `@/*` → `apps/web/src/*`.
 
 ### Backend (apps/server)

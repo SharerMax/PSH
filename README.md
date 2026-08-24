@@ -6,7 +6,7 @@ A self-hosted Pastebin-style snippet sharing service. Monorepo managed with pnpm
 
 | Layer   | Tech                                                                  |
 | ------- | --------------------------------------------------------------------- |
-| Web     | React 19, Vite 8, Tailwind CSS v4, shadcn/ui (Base UI), react-router 8, shiki |
+| Web     | React 19, Vite 8, Tailwind CSS v4, shadcn/ui (Base UI), react-router 8, shiki + modern-monaco editor |
 | Server  | Node.js, Hono v4, @hono/node-server, zod v4                           |
 | Storage | SQLite (better-sqlite3) + Drizzle ORM                                 |
 | Shared  | `@psh/shared` — zod schemas & types consumed as TS source             |
