@@ -42,9 +42,10 @@ pnpm start          # http://localhost:3000
 
 ## Docker
 
-Multi-arch images (`linux/amd64`, `linux/arm64`) are published to GHCR automatically:
-pushes to `main` produce the `main` tag, `v*` tags produce semver tags plus `latest`.
-PRs only validate the build without pushing.
+Multi-arch images (`linux/amd64`, `linux/arm64`) are published to GHCR when a `v*`
+tag is pushed: the tag produces semver tags (`X.Y.Z`, `X.Y`) plus `latest`. Regular
+pushes do not build images; runs can also be triggered manually from the Actions tab
+(`workflow_dispatch`, tagged `sha-<ref>`).
 
 ```sh
 # recommended: docker compose (see compose.yaml)

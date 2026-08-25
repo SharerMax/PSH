@@ -79,10 +79,10 @@ pnpm --filter @psh/server db:generate   # regenerate drizzle migrations after sc
 - `better-sqlite3` bundles prebuilt bindings inside its tarball (incl. linux-musl and
   arm64), so the Alpine-based image needs no build toolchain. Keep
   `allowBuilds.better-sqlite3: false`.
-- `.github/workflows/docker.yml` builds and pushes `ghcr.io/sharermax/psh`: pushes to
-  `main` → `:main`, `v*` tags → semver + `latest`; PRs validate an amd64-only build
-  without pushing. Web build stage is pinned to `$BUILDPLATFORM` so arm64 images don't
-  run JS tooling under QEMU.
+- `.github/workflows/docker.yml` builds and pushes `ghcr.io/sharermax/psh` only on
+  `v*` tag pushes (semver + `latest`) or manual `workflow_dispatch` (gets a `sha-*`
+  tag); regular pushes and PRs do not trigger image builds. Web build stage is pinned
+  to `$BUILDPLATFORM` so arm64 images don't run JS tooling under QEMU.
 - Image builds run `vite build` directly — no `tsc` inside Docker; type checking happens
   via `pnpm typecheck` (local/CI) before publishing.
 
