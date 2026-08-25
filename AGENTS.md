@@ -67,6 +67,23 @@ pnpm --filter @psh/server db:generate   # regenerate drizzle migrations after sc
 - TS source is imported directly by both server (tsx) and web (Vite) — never add a build step.
 - Keep request/response zod schemas here so both sides stay in sync.
 
+### Docker & CI
+
+- The runtime image preserves the pnpm workspace layout. Path resolution depends on it:
+  `src/app.ts` resolves the SPA at `../../web/dist` relative to the server sources (with
+  `serveStatic` root being cwd-relative) and migrations resolve at `apps/server/drizzle`.
+  Do not flatten image paths without updating those resolvers.
+- Containers start the server as a single process: `node --import tsx src/index.ts`
+  (SIGTERM reaches the shutdown handler directly). Keep `@psh/shared` in the server's
+  `dependencies` — tsx loads its TS source at runtime, so a prod-only install still needs it.
+- `better-sqlite3` bundles prebuilt bindings inside its tarball (incl. linux-musl and
+  arm64), so the Alpine-based image needs no build toolchain. Keep
+  `allowBuilds.better-sqlite3: false`.
+- `.github/workflows/docker.yml` builds and pushes `ghcr.io/sharermax/psh`: pushes to
+  `main` → `:main`, `v*` tags → semver + `latest`; PRs validate an amd64-only build
+  without pushing. Web build stage is pinned to `$BUILDPLATFORM` so arm64 images don't
+  run JS tooling under QEMU.
+
 ## Verification checklist before committing
 
 1. `pnpm typecheck` passes

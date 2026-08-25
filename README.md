@@ -40,6 +40,32 @@ pnpm build
 pnpm start          # http://localhost:3000
 ```
 
+## Docker
+
+Multi-arch images (`linux/amd64`, `linux/arm64`) are published to GHCR automatically:
+pushes to `main` produce the `main` tag, `v*` tags produce semver tags plus `latest`.
+PRs only validate the build without pushing.
+
+```sh
+# recommended: docker compose (see compose.yaml)
+docker compose up -d            # serves http://localhost:3000
+
+# or plain docker
+docker run -d -p 3000:3000 -v psh-data:/app/data ghcr.io/sharermax/psh:latest
+
+# from source instead of pulling
+docker compose up -d --build    # or: docker build -t psh .
+```
+
+Notes:
+
+- The SQLite database lives in the `/app/data` volume — mount a named volume or host
+  directory there to persist pastes across upgrades (host binds must be writable by uid 1000)
+- Port/env overrides work the same as local runs (`PORT`, `DATABASE_PATH` defaults come
+  baked into the image)
+- The first published package is private on GHCR; flip it to public in the repo's
+  Packages settings if you want anonymous pulls
+
 ## Configuration
 
 | Variable       | Default       | Description                  |

@@ -1,0 +1,28 @@
+# docker compose support for self-hosting psh
+#
+# start:   docker compose up -d
+# logs:    docker compose logs -f
+# stop:    docker compose down        (data persists in the named volume)
+
+services:
+  psh:
+    image: ghcr.io/sharermax/psh:latest
+    # To run from source instead of pulling the published image, uncomment:
+    # build: .
+    ports:
+      # host side is configurable via .env (PSH_PORT=8080); container always listens on 3000
+      - '${PSH_PORT:-3000}:3000'
+    environment:
+      TZ: ${TZ:-UTC}
+      # PORT=3000 and DATABASE_PATH=/app/data/psh.db are set in the image;
+      # override here if needed
+    volumes:
+      # SQLite database lives here; use a named volume (survives upgrades)
+      - psh-data:/app/data
+      # Alternatively a host directory (on Linux the dir must be writable by uid 1000):
+      # - ./data:/app/data
+    restart: unless-stopped
+    # healthcheck is defined in the Dockerfile and picked up automatically
+
+volumes:
+  psh-data:
