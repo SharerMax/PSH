@@ -20,7 +20,8 @@ COPY apps/server/package.json apps/server/
 COPY apps/web/package.json apps/web/
 RUN pnpm install --frozen-lockfile
 COPY . .
-RUN pnpm --filter @psh/web build
+# vite build only: typecheck runs separately (pnpm typecheck), not inside image builds
+RUN pnpm --filter @psh/web exec vite build
 
 # ---------- stage 2: production runtime ----------
 # keeps the workspace layout: app.ts resolves the SPA at ../../web/dist

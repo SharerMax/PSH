@@ -83,6 +83,8 @@ pnpm --filter @psh/server db:generate   # regenerate drizzle migrations after sc
   `main` → `:main`, `v*` tags → semver + `latest`; PRs validate an amd64-only build
   without pushing. Web build stage is pinned to `$BUILDPLATFORM` so arm64 images don't
   run JS tooling under QEMU.
+- Image builds run `vite build` directly — no `tsc` inside Docker; type checking happens
+  via `pnpm typecheck` (local/CI) before publishing.
 
 ## Verification checklist before committing
 
