@@ -1,16 +1,19 @@
 import type { ExpiryOption, PasteContent, PasteMeta } from '@psh/shared'
+import type { Context } from 'hono'
 import type { NewPasteRow, PasteRow } from '../db/schema'
 import { zValidator } from '@hono/zod-validator'
 import {
 
   pasteCreateInputSchema,
   pasteIdParamsSchema,
+  pasteUpdateInputSchema,
 
 } from '@psh/shared'
 import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { db } from '../db'
-import { pastes } from '../db/schema'
+import { pastes, pasteViews } from '../db/schema'
+import { getSessionUser } from '../lib/auth'
 import {
   decryptContent,
   DecryptionError,
@@ -18,6 +21,7 @@ import {
   hashPassword,
   verifyPassword,
 } from '../lib/crypto'
+import { countryForIp, getRequestIp } from '../lib/geoip'
 import { newPasteId } from '../lib/id'
 
 const EXPIRY_MS: Partial<Record<ExpiryOption, number>> = {
@@ -35,8 +39,20 @@ function computeExpiry(expiresIn: string | undefined): Date | null {
   return ms ? new Date(Date.now() + ms) : null
 }
 
-function isExpired(row: Pick<PasteRow, 'expiresAt'>): boolean {
+export function isExpired(row: Pick<PasteRow, 'expiresAt'>): boolean {
   return row.expiresAt !== null && row.expiresAt.getTime() <= Date.now()
+}
+
+/** Record one access for statistics. Skipped for burn-after-read pastes. */
+function recordView(c: Context, pasteId: string, burnAfterRead: boolean): void {
+  if (burnAfterRead) {
+    return
+  }
+  const ip = getRequestIp(c)
+  const country = countryForIp(ip)
+  db.insert(pasteViews)
+    .values({ pasteId, country: country ?? 'unknown', ip: ip ?? null })
+    .run()
 }
 
 function toMeta(row: PasteRow): PasteMeta {
@@ -130,12 +146,13 @@ function buildNewRow(input: {
   expiresIn?: '10min' | '1h' | '1d' | '7d' | 'forever'
   password?: string
   burnAfterRead?: boolean
-}): NewPasteRow {
+}, userId: string | null): NewPasteRow {
   const base = {
     id: newPasteId(),
     title: input.title || null,
     language: input.language,
     burnAfterRead: input.burnAfterRead ?? false,
+    userId,
     expiresAt: computeExpiry(input.expiresIn),
   }
 
@@ -157,9 +174,58 @@ export const apiRoutes = new Hono()
     zValidator('json', pasteCreateInputSchema),
     (c) => {
       const input = c.req.valid('json')
-      const row = buildNewRow(input)
+      const user = getSessionUser(c)
+      const row = buildNewRow(input, user?.id ?? null)
       db.insert(pastes).values(row).run()
       return c.json({ id: row.id }, 201)
+    },
+  )
+  .patch(
+    '/:id',
+    zValidator('param', pasteIdParamsSchema),
+    zValidator('json', pasteUpdateInputSchema),
+    (c) => {
+      const user = getSessionUser(c)
+      if (!user) {
+        return c.json({ error: 'Not authenticated' }, 401)
+      }
+      const { id } = c.req.valid('param')
+      const row = getLiveRow(id)
+      if (!row) {
+        return c.json({ error: 'Paste not found or expired' }, 404)
+      }
+      if (row.userId !== user.id) {
+        return c.json({ error: 'Not the paste owner' }, 403)
+      }
+
+      const input = c.req.valid('json')
+      const updates: Partial<NewPasteRow> = {}
+      if (input.title !== undefined) {
+        updates.title = input.title || null
+      }
+      if (input.language !== undefined) {
+        updates.language = input.language
+      }
+      if (input.content !== undefined) {
+        if (row.passwordHash !== null) {
+          // re-encrypting requires the current paste password
+          if (!input.password || !verifyPassword(input.password, row.passwordHash)) {
+            return c.json({ error: 'Invalid or missing password' }, 401)
+          }
+          Object.assign(updates, encryptContent(input.content, input.password), {
+            content: null,
+          })
+        }
+        else {
+          updates.content = input.content
+        }
+      }
+
+      if (Object.keys(updates).length === 0) {
+        return c.json({ error: 'Nothing to update' }, 400)
+      }
+      db.update(pastes).set(updates).where(eq(pastes.id, id)).run()
+      return c.json(toMeta({ ...row, ...updates }))
     },
   )
   .get(
@@ -183,6 +249,7 @@ export const apiRoutes = new Hono()
       if (!result.ok) {
         return c.json({ error: result.message }, result.status)
       }
+      recordView(c, id, result.row.burnAfterRead)
       return c.json(toContentPayload(result.row, result.content))
     },
   )
@@ -197,6 +264,7 @@ export const rawRoutes = new Hono()
       if (!result.ok) {
         return c.text(result.message, result.status as 400 | 401 | 404)
       }
+      recordView(c, id, result.row.burnAfterRead)
       return c.text(result.content, 200, {
         'Content-Type': 'text/plain; charset=utf-8',
       })

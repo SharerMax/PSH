@@ -8,6 +8,20 @@
       "when": 1787333876305,
       "tag": "0000_fat_vivisector",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1787852473615,
+      "tag": "0001_grey_morlun",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1787859913251,
+      "tag": "0002_bizarre_sue_storm",
+      "breakpoints": true
     }
   ]
 }

@@ -4,8 +4,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { toast } from 'sonner'
 import { CodeEditor } from '@/components/CodeEditor'
-import { LanguageSwitcher } from '@/components/LanguageSwitcher'
-import { ThemeSwitcher } from '@/components/ThemeSwitcher'
+import { PageHeader } from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -79,10 +78,7 @@ export function Home() {
             </Link>
             <p className="text-muted-foreground text-sm">{t('app.tagline')}</p>
           </div>
-          <div className="flex items-center gap-2">
-            <LanguageSwitcher />
-            <ThemeSwitcher />
-          </div>
+          <PageHeader left={null} />
         </header>
 
         <Card className="flex flex-1 flex-col">

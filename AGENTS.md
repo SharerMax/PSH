@@ -25,6 +25,16 @@ pnpm lint:fix                # eslint . --fix
 pnpm --filter @psh/server db:generate   # regenerate drizzle migrations after schema edits
 ```
 
+The server's `dev` and `start` scripts run Node with `--env-file-if-exists=.env`, so local
+dev/test config lives in `apps/server/.env` (gitignored; see `.env.example`). Supported
+variables:
+
+| Variable       | Effect                                                                        |
+| -------------- | ----------------------------------------------------------------------------- |
+| `PORT`         | API listen port (default `3000`)                                              |
+| `DATABASE_PATH`| SQLite file location                                                          |
+| `MMDB_PATH`    | Path to a MaxMind `.mmdb` file. When set, view stats record country/region (client IP via `X-Forwarded-For` or socket; private IPs resolve to `LOCAL`). When unset, geo stats are disabled and the UI hides country data. Test file lives in `apps/server/mmdb/` (gitignored — never commit `.mmdb` files). |
+
 ## Critical conventions
 
 ### Dependencies & pnpm
@@ -51,6 +61,11 @@ pnpm --filter @psh/server db:generate   # regenerate drizzle migrations after sc
   load lazily as their own chunk — never add a `MonacoEnvironment` setup, worker config or
   CSS imports for it. Gutter width is tuned via `lineNumbersMinChars` + `lineDecorationsWidth`
   (pixel-level) to keep the numbers column at 48px.
+- Auth state comes from `lib/auth.tsx` (`AuthProvider` + `useAuth()`); the login state
+  drives the shared header controls — use the `PageHeader` component for page headers
+  (it renders logo link, language/theme switchers and the `AccountMenu` avatar) and the
+  `CountryMap` component for the stats world map (map data is `@svg-maps/world`,
+  CC BY 4.0 — keep the attribution line).
 - Path alias `@/*` → `apps/web/src/*`.
 
 ### Backend (apps/server)
@@ -61,6 +76,17 @@ pnpm --filter @psh/server db:generate   # regenerate drizzle migrations after sc
 - Expiry: lazy deletion on read plus a 10-minute sweep interval.
 - Drizzle migrations live in `apps/server/drizzle` and run automatically at startup — commit
   generated SQL after schema changes.
+- **User accounts & sessions**: username/password registration + login (`routes/auth.ts`).
+  Sessions are DB-backed (`users`/`sessions` tables) with a random token in an HttpOnly
+  cookie (30 days); helpers live in `lib/auth.ts` (`requireAuth` middleware,
+  `getUser(c)`). Anonymous use of all paste endpoints is unaffected — auth only gates
+  ownership features. Owner-only endpoints: `PATCH /api/pastes/:id` (edit content in
+  place, link unchanged), `/api/mine` (list), `/api/mine/:id/stats`, and
+  `/api/mine/:id/views` (paginated records with country/IP/time-range filters, schemas
+  shared via `pasteViewsQuerySchema`/`pasteViewsPageSchema`).
+- **View tracking**: every content read inserts a `paste_views` row (timestamp, IP,
+  country). GeoIP lookup is in `lib/geoip.ts` — synchronous `mmdb-lib` reader initialized
+  from `MMDB_PATH`; never make it async or move it to request time.
 
 ### Shared package (packages/shared)
 
@@ -91,7 +117,8 @@ pnpm --filter @psh/server db:generate   # regenerate drizzle migrations after sc
 1. `pnpm typecheck` passes
 2. `pnpm lint` passes
 3. If server behavior changed: smoke test with `curl` against `localhost:3000`
-   (`POST /api/pastes`, `/api/pastes/:id/meta`, `/api/pastes/:id/content?password=`, `/raw/:id`)
+   (`POST /api/pastes`, `/api/pastes/:id/meta`, `/api/pastes/:id/content?password=`, `/raw/:id`);
+   for auth/owner features also cover register → login (cookie) → create → stats/views → edit
 4. If web behavior changed: verify visually against the dev server on `:5173`
 
 ## External references

@@ -2,12 +2,16 @@ node_modules/
 dist/
 *.local
 *.log
+*.tsbuildinfo
 
 # database
 data/
 *.db
 *.db-journal
 *.sqlite
+
+# MaxMind mmdb data files (fetch your own GeoLite2-Country.mmdb)
+apps/server/mmdb/
 
 # env
 .env

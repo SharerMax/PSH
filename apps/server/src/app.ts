@@ -2,6 +2,8 @@ import { existsSync, readFileSync } from 'node:fs'
 import { join, relative, resolve, sep } from 'node:path'
 import { serveStatic } from '@hono/node-server/serve-static'
 import { Hono } from 'hono'
+import { authRoutes } from './routes/auth'
+import { mineRoutes } from './routes/mine'
 import { apiRoutes, rawRoutes } from './routes/pastes'
 
 function toPosix(p: string): string {
@@ -12,6 +14,8 @@ export function createApp(): Hono {
   const app = new Hono()
 
   app.route('/api/pastes', apiRoutes)
+  app.route('/api/auth', authRoutes)
+  app.route('/api/mine', mineRoutes)
   app.route('/raw', rawRoutes)
 
   // single-process deployment: host the built web client when present

@@ -1,0 +1,1 @@
+ALTER TABLE `paste_views` ADD `ip` text;

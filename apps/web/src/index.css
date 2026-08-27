@@ -3,9 +3,14 @@
 @import 'shadcn/tailwind.css';
 @import '@fontsource-variable/inter';
 
-/* keep shadcn/ui sources pristine: shrink button icons globally instead
-   of editing components/ui/button.tsx (unlayered rule wins over utilities) */
-[data-slot='button'] svg:not([class*='size-']) {
+/* keep shadcn/ui sources pristine: shrink icons globally instead of editing
+   components/ui/* (unlayered rule wins over utilities).
+   covers button icons and dropdown-menu item/trigger icons */
+[data-slot='button'] svg:not([class*='size-']),
+[data-slot='dropdown-menu-trigger'] svg:not([class*='size-']),
+[data-slot='dropdown-menu-item'] svg:not([class*='size-']),
+[data-slot='dropdown-menu-checkbox-item'] svg:not([class*='size-']),
+[data-slot='dropdown-menu-radio-item'] svg:not([class*='size-']) {
   width: 0.875rem;
   height: 0.875rem;
 }

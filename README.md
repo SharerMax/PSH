@@ -14,10 +14,16 @@ A self-hosted Pastebin-style snippet sharing service. Monorepo managed with pnpm
 
 ## Features
 
+- Anonymous or logged-in usage — accounts are only needed for owner features
+- User accounts: username/password registration, DB-backed sessions (HttpOnly cookie, 30 days)
 - Create pastes with optional title, syntax language, expiry (`10min/1h/1d/7d/forever`), password and burn-after-read
 - Password-protected pastes are stored AES-256-GCM encrypted (scrypt-derived key); passwords hashed with scrypt
 - Burn-after-read pastes are deleted immediately after one successful read
 - Lazy expiry on read plus a background sweep every 10 minutes
+- Owners can edit paste content within its lifetime while keeping the link unchanged
+- "My pastes" list with view counts, and per-paste statistics: total views, last access
+  (time, IP, country/region), a world map distribution and a paginated access-records
+  table with country / IP / date-range filters
 - Raw endpoint serving `text/plain`, single-process production deploy (server hosts the built web client)
 - Viewer with shiki syntax highlighting, password dialog, copy/raw/download actions and expiry countdown
 
@@ -69,10 +75,15 @@ Notes:
 
 ## Configuration
 
-| Variable       | Default       | Description                  |
-| -------------- | ------------- | ---------------------------- |
-| `PORT`         | `3000`        | Server port                  |
-| `DATABASE_PATH`| `data/psh.db` | SQLite database file path    |
+Local dev/test config lives in `apps/server/.env` (gitignored, see `.env.example`); the
+server's `dev`/`start` scripts load it via `--env-file-if-exists`. All variables also
+work as plain environment variables (e.g. in Docker):
+
+| Variable        | Default       | Description                              |
+| --------------- | ------------- | ---------------------------------------- |
+| `PORT`          | `3000`        | Server port                              |
+| `DATABASE_PATH` | `data/psh.db` | SQLite database file path                |
+| `MMDB_PATH`     | —             | Path to a MaxMind `.mmdb` file. When set, view statistics record country/region (private IPs resolve to `LOCAL`). When unset, geo stats are disabled and the UI hides country data. |
 
 ## API
 
@@ -82,6 +93,14 @@ Notes:
 | GET    | `/api/pastes/:id/meta`        | Metadata (no content); `hasPassword` flag          |
 | GET    | `/api/pastes/:id/content?password=` | Content JSON; wrong password → 401           |
 | GET    | `/raw/:id?password=`          | Raw content as `text/plain; charset=utf-8`         |
+| PATCH  | `/api/pastes/:id`             | Owner: edit title/language/content (link unchanged) |
+| POST   | `/api/auth/register`          | Create account (username + password)               |
+| POST   | `/api/auth/login`             | Log in → sets session cookie                       |
+| POST   | `/api/auth/logout`            | Destroy current session                            |
+| GET    | `/api/auth/me`                | Current user (`401` when anonymous)                |
+| GET    | `/api/mine`                   | Owner: list own pastes with view counts            |
+| GET    | `/api/mine/:id/stats`         | Owner: aggregate stats (views, last access, by country) |
+| GET    | `/api/mine/:id/views`         | Owner: paginated access records (`page`, `pageSize`, `country`, `ip`, `from`, `to`) |
 
 Create body:
 
@@ -100,8 +119,8 @@ Create body:
 
 ```
 apps/
-  server/   Hono api, drizzle schema/migrations, crypto & cleanup libs
-  web/      React SPA (Vite), shadcn/ui components, pages
+  server/   Hono api, auth & sessions, geoip, drizzle schema/migrations, crypto & cleanup libs
+  web/      React SPA (Vite), shadcn/ui components, pages (viewer, editor, my pastes, stats)
 packages/
   shared/   zod schemas + shared types (TS source, no build step)
 ```
@@ -114,3 +133,8 @@ After editing `apps/server/src/db/schema.ts`, regenerate with:
 ```sh
 pnpm --filter @psh/server db:generate
 ```
+
+## Credits
+
+- Statistics world map geometry: [svg-maps/world](https://github.com/VictorCazanave/svg-maps),
+  licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)

@@ -1,13 +1,14 @@
-import type { PasteContent, PasteCreatedResponse, PasteCreateInput, PasteMeta } from '@psh/shared'
-import type { z } from 'zod'
+import type { AuthInput, MyPasteList, PasteContent, PasteCreatedResponse, PasteCreateInput, PasteMeta, PasteStats, PasteUpdateInput, PasteViewsPage, PasteViewsQuery, User } from '@psh/shared'
 import {
-
+  myPasteListSchema,
   pasteContentSchema,
-
   pasteCreatedResponseSchema,
-
   pasteMetaSchema,
+  pasteStatsSchema,
+  pasteViewsPageSchema,
+  userSchema,
 } from '@psh/shared'
+import { z } from 'zod'
 
 export class ApiError extends Error {
   status: number
@@ -55,4 +56,68 @@ export function getPasteMeta(id: string): Promise<PasteMeta> {
 export function getPasteContent(id: string, password?: string): Promise<PasteContent> {
   const query = password ? `?password=${encodeURIComponent(password)}` : ''
   return request(`/api/pastes/${id}/content${query}`, pasteContentSchema)
+}
+
+export function register(input: AuthInput): Promise<User> {
+  return request('/api/auth/register', userSchema, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+}
+
+export function login(input: AuthInput): Promise<User> {
+  return request('/api/auth/login', userSchema, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+}
+
+export function logout(): Promise<{ ok: boolean }> {
+  return request('/api/auth/logout', z.object({ ok: z.boolean() }), { method: 'POST' })
+}
+
+export function getMe(): Promise<User> {
+  return request('/api/auth/me', userSchema)
+}
+
+export function getMyPastes(): Promise<MyPasteList> {
+  return request('/api/mine', myPasteListSchema)
+}
+
+export function getPasteStats(id: string): Promise<PasteStats> {
+  return request(`/api/mine/${id}/stats`, pasteStatsSchema)
+}
+
+export function getPasteViews(id: string, query: Partial<PasteViewsQuery>): Promise<PasteViewsPage> {
+  const params = new URLSearchParams()
+  if (query.page) {
+    params.set('page', String(query.page))
+  }
+  if (query.pageSize) {
+    params.set('pageSize', String(query.pageSize))
+  }
+  if (query.country) {
+    params.set('country', query.country)
+  }
+  if (query.ip) {
+    params.set('ip', query.ip)
+  }
+  if (query.from) {
+    params.set('from', query.from)
+  }
+  if (query.to) {
+    params.set('to', query.to)
+  }
+  const qs = params.toString()
+  return request(`/api/mine/${id}/views${qs ? `?${qs}` : ''}`, pasteViewsPageSchema)
+}
+
+export function updatePaste(id: string, input: PasteUpdateInput): Promise<PasteMeta> {
+  return request(`/api/pastes/${id}`, pasteMetaSchema, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
 }

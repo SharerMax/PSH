@@ -1,12 +1,14 @@
 import { and, isNotNull, lt } from 'drizzle-orm'
 import { db } from '../db'
 import { pastes } from '../db/schema'
+import { purgeExpiredSessions } from './auth'
 
 export function purgeExpired(): number {
   const result = db
     .delete(pastes)
     .where(and(isNotNull(pastes.expiresAt), lt(pastes.expiresAt, new Date())))
     .run()
+  purgeExpiredSessions()
   return result.changes
 }
 
