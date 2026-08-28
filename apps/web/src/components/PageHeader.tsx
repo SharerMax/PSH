@@ -15,7 +15,7 @@ interface PageHeaderProps {
 
 export function PageHeader({ left, beforeControls, showAccount = true }: PageHeaderProps) {
   return (
-    <div className="flex items-center justify-between gap-4">
+    <div className="flex w-full items-center justify-between gap-4">
       {left === undefined
         ? (
             <Link to="/" className="text-muted-foreground text-sm hover:underline">
@@ -23,7 +23,7 @@ export function PageHeader({ left, beforeControls, showAccount = true }: PageHea
             </Link>
           )
         : left}
-      <div className="flex items-center gap-2">
+      <div className="ml-auto flex items-center gap-2">
         {beforeControls}
         <LanguageSwitcher />
         <ThemeSwitcher />
