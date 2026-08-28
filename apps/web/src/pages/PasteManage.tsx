@@ -69,6 +69,7 @@ export function PasteManage() {
   const [content, setContent] = useState<string | null>(null)
 
   const contentRequestedRef = useRef(false)
+  const contentBytes = content === null ? 0 : new TextEncoder().encode(content).byteLength
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -228,8 +229,8 @@ export function PasteManage() {
   }
 
   return (
-    <main className="bg-background min-h-dvh">
-      <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-10">
+    <main className="bg-background flex min-h-dvh flex-col">
+      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-10">
         <header className="flex flex-col gap-2">
           <PageHeader
             left={(
@@ -294,41 +295,14 @@ export function PasteManage() {
           )}
         </header>
 
-        <Card>
+        <Card className="flex flex-1 flex-col">
           <CardHeader>
             <CardTitle>{t('edit.title')}</CardTitle>
             <CardDescription>{t('edit.description')}</CardDescription>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSave} className="flex flex-col gap-5" noValidate>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="title">{t('field.title')}</Label>
-                <Input
-                  id="title"
-                  value={title}
-                  onChange={e => setTitle(e.target.value)}
-                  placeholder={t('placeholder.untitled')}
-                  maxLength={200}
-                />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="language">{t('field.language')}</Label>
-                <Select value={language} onValueChange={value => setLanguage(value as PasteLanguage)}>
-                  <SelectTrigger id="language" className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PASTE_LANGUAGES.map(option => (
-                      <SelectItem key={option} value={option}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex flex-col gap-2">
+          <CardContent className="flex flex-1 flex-col">
+            <form onSubmit={handleSave} className="flex flex-1 flex-col gap-6 lg:flex-row" noValidate>
+              <div className="flex min-w-0 flex-1 flex-col gap-2">
                 <Label htmlFor="content">{t('field.content')}</Label>
                 {content === null
                   ? <Skeleton className="min-h-40 w-full" />
@@ -340,30 +314,62 @@ export function PasteManage() {
                         language={language}
                         ariaLabel={t('field.content')}
                         placeholder={t('placeholder.content')}
-                        className="min-h-40"
+                        className="flex-1"
                       />
                     )}
+                {content !== null && (
+                  <p className="text-muted-foreground text-right text-xs">
+                    {t('bytes.counter', { count: contentBytes.toLocaleString(locale === 'zh' ? 'zh-CN' : 'en-US') })}
+                  </p>
+                )}
               </div>
 
-              {hasPassword && (
+              <aside className="flex w-full shrink-0 flex-col gap-5 lg:w-65 xl:w-75">
                 <div className="flex flex-col gap-2">
-                  <Label htmlFor="paste-password">{t('edit.currentPassword')}</Label>
+                  <Label htmlFor="title">{t('field.title')}</Label>
                   <Input
-                    id="paste-password"
-                    type="password"
-                    value={pastePassword}
-                    onChange={e => setPastePassword(e.target.value)}
-                    autoComplete="off"
+                    id="title"
+                    value={title}
+                    onChange={e => setTitle(e.target.value)}
+                    placeholder={t('placeholder.untitled')}
+                    maxLength={200}
                   />
-                  <p className="text-muted-foreground text-xs">{t('edit.needPassword')}</p>
                 </div>
-              )}
 
-              <div>
-                <Button type="submit" disabled={saving || content === null}>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="language">{t('field.language')}</Label>
+                  <Select value={language} onValueChange={value => setLanguage(value as PasteLanguage)}>
+                    <SelectTrigger id="language" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PASTE_LANGUAGES.map(option => (
+                        <SelectItem key={option} value={option}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {hasPassword && (
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="paste-password">{t('edit.currentPassword')}</Label>
+                    <Input
+                      id="paste-password"
+                      type="password"
+                      value={pastePassword}
+                      onChange={e => setPastePassword(e.target.value)}
+                      autoComplete="off"
+                    />
+                    <p className="text-muted-foreground text-xs">{t('edit.needPassword')}</p>
+                  </div>
+                )}
+
+                <Button type="submit" disabled={saving || content === null} className="w-full lg:mt-auto">
                   {saving ? t('action.saving') : t('action.save')}
                 </Button>
-              </div>
+              </aside>
             </form>
           </CardContent>
         </Card>
