@@ -1,11 +1,11 @@
 import { createBrowserRouter } from 'react-router'
-import { Home } from '@/pages/Home'
-import { Login } from '@/pages/Login'
-import { MyPastes } from '@/pages/MyPastes'
-import { NotFound } from '@/pages/NotFound'
-import { PasteManage } from '@/pages/PasteManage'
-import { PasteStatsPage } from '@/pages/PasteStats'
-import { PasteView } from '@/pages/PasteView'
+import { PasteView } from '@/pages/$link'
+import { Home } from '@/pages/home'
+import { Login } from '@/pages/login'
+import { MyPastes } from '@/pages/mine'
+import { PasteManage } from '@/pages/mine/$id'
+import { PasteStatsPage } from '@/pages/mine/$id/stats'
+import { NotFound } from '@/pages/not-found'
 
 export const router = createBrowserRouter([
   {

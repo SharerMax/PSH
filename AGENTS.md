@@ -67,6 +67,11 @@ variables:
   `CountryMap` component for the stats world map (map data is `@svg-maps/world`,
   CC BY 4.0 — keep the attribution line).
 - Path alias `@/*` → `apps/web/src/*`.
+- **Pages are organized by route path**: `pages/home/`, `pages/login/`, `pages/mine/`,
+  `pages/mine/$id/`, `pages/mine/$id/stats/`, `pages/$link/` (dynamic segments use
+  `$param`), `pages/not-found/`. Each page dir has an `index.tsx` entry plus
+  page-scoped components in `components/`; shared across pages: `PasteDeleteDialog`,
+  `PasteUnlockDialog` in `src/components/`.
 
 ### Backend (apps/server)
 
