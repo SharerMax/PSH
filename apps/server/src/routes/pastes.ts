@@ -1,14 +1,8 @@
-import type { ExpiryOption, PasteContent, PasteMeta } from '@psh/shared'
+import type { ExpiryOption, PasteContent, PasteMeta, PasteUpdateInput } from '@psh/shared'
 import type { Context } from 'hono'
 import type { NewPasteRow, PasteRow } from '../db/schema'
 import { zValidator } from '@hono/zod-validator'
-import {
-
-  pasteCreateInputSchema,
-  pasteIdParamsSchema,
-  pasteUpdateInputSchema,
-
-} from '@psh/shared'
+import { pasteCreateInputSchema, pasteIdParamsSchema, pasteLinkParamsSchema, pasteUpdateInputSchema } from '@psh/shared'
 import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { db } from '../db'
@@ -44,7 +38,7 @@ export function isExpired(row: Pick<PasteRow, 'expiresAt'>): boolean {
 }
 
 /** Record one access for statistics. Skipped for burn-after-read pastes. */
-function recordView(c: Context, pasteId: string, burnAfterRead: boolean): void {
+function recordView(c: Context, pasteId: number, burnAfterRead: boolean): void {
   if (burnAfterRead) {
     return
   }
@@ -57,7 +51,7 @@ function recordView(c: Context, pasteId: string, burnAfterRead: boolean): void {
 
 function toMeta(row: PasteRow): PasteMeta {
   return {
-    id: row.id,
+    link: row.link,
     title: row.title,
     language: row.language,
     hasPassword: row.passwordHash !== null,
@@ -69,7 +63,7 @@ function toMeta(row: PasteRow): PasteMeta {
 
 function toContentPayload(row: PasteRow, content: string): PasteContent {
   return {
-    id: row.id,
+    link: row.link,
     title: row.title,
     language: row.language,
     content,
@@ -78,17 +72,26 @@ function toContentPayload(row: PasteRow, content: string): PasteContent {
   }
 }
 
-/** Fetch a row, lazily deleting it if expired. Returns null when gone. */
-function getLiveRow(id: string): PasteRow | null {
-  const [row] = db.select().from(pastes).where(eq(pastes.id, id)).all()
+/** Lazily delete an expired row; returns null when the row is gone. */
+function expireCheck(row: PasteRow | undefined): PasteRow | null {
   if (!row) {
     return null
   }
   if (isExpired(row)) {
-    db.delete(pastes).where(eq(pastes.id, id)).run()
+    db.delete(pastes).where(eq(pastes.id, row.id)).run()
     return null
   }
   return row
+}
+
+function getLiveRowByLink(link: string): PasteRow | null {
+  const [row] = db.select().from(pastes).where(eq(pastes.link, link)).all()
+  return expireCheck(row)
+}
+
+function getLiveRowById(id: number): PasteRow | null {
+  const [row] = db.select().from(pastes).where(eq(pastes.id, id)).all()
+  return expireCheck(row)
 }
 
 export type ReadResult
@@ -97,14 +100,9 @@ export type ReadResult
 
 /**
  * Shared read path for the JSON content endpoint and the raw endpoint:
- * lazy expiry check, password verification/decryption, burn-after-read.
+ * password verification/decryption, burn-after-read.
  */
-export function readPaste(id: string, password?: string): ReadResult {
-  const row = getLiveRow(id)
-  if (!row) {
-    return { ok: false, status: 404, message: 'Paste not found or expired' }
-  }
-
+export function readPaste(row: PasteRow, password?: string): ReadResult {
   let content: string
   if (row.passwordHash !== null) {
     if (!password || !verifyPassword(password, row.passwordHash)) {
@@ -133,10 +131,26 @@ export function readPaste(id: string, password?: string): ReadResult {
   }
 
   if (row.burnAfterRead) {
-    db.delete(pastes).where(eq(pastes.id, id)).run()
+    db.delete(pastes).where(eq(pastes.id, row.id)).run()
   }
 
   return { ok: true, row, content }
+}
+
+function readByLink(link: string, password?: string): ReadResult {
+  const row = getLiveRowByLink(link)
+  if (!row) {
+    return { ok: false, status: 404, message: 'Paste not found or expired' }
+  }
+  return readPaste(row, password)
+}
+
+function readById(id: number, password?: string): ReadResult {
+  const row = getLiveRowById(id)
+  if (!row) {
+    return { ok: false, status: 404, message: 'Paste not found or expired' }
+  }
+  return readPaste(row, password)
 }
 
 function buildNewRow(input: {
@@ -146,10 +160,10 @@ function buildNewRow(input: {
   expiresIn?: '10min' | '1h' | '1d' | '7d' | 'forever'
   password?: string
   burnAfterRead?: boolean
-  customId?: string
+  link?: string
 }, userId: string | null): NewPasteRow {
   const base = {
-    id: input.customId ?? newPasteId(),
+    link: input.link ?? newPasteId(),
     title: input.title || null,
     language: input.language,
     burnAfterRead: input.burnAfterRead ?? false,
@@ -169,79 +183,101 @@ function buildNewRow(input: {
   return { ...base, content: input.content }
 }
 
+/** Shared PATCH body for both /link/:link and /id/:id. */
+function applyUpdate(c: Context, row: PasteRow, input: PasteUpdateInput): Response {
+  const updates: Partial<NewPasteRow> = {}
+  if (input.title !== undefined) {
+    updates.title = input.title || null
+  }
+  if (input.language !== undefined) {
+    updates.language = input.language
+  }
+  if (input.content !== undefined) {
+    if (row.passwordHash !== null) {
+      // re-encrypting requires the current paste password
+      if (!input.password || !verifyPassword(input.password, row.passwordHash)) {
+        return c.json({ error: 'Invalid or missing password' }, 401)
+      }
+      Object.assign(updates, encryptContent(input.content, input.password), {
+        content: null,
+      })
+    }
+    else {
+      updates.content = input.content
+    }
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return c.json({ error: 'Nothing to update' }, 400)
+  }
+  db.update(pastes).set(updates).where(eq(pastes.id, row.id)).run()
+  return c.json(toMeta({ ...row, ...updates }))
+}
+
+/** Shared PATCH precondition checks for both /link/:link and /id/:id. */
+function resolveUpdatable(c: Context, row: PasteRow | null): { row: PasteRow } | { response: Response } {
+  const user = getSessionUser(c)
+  if (!user) {
+    return { response: c.json({ error: 'Not authenticated' }, 401) }
+  }
+  if (!row) {
+    return { response: c.json({ error: 'Paste not found or expired' }, 404) }
+  }
+  if (row.userId !== user.id) {
+    return { response: c.json({ error: 'Not the paste owner' }, 403) }
+  }
+  return { row }
+}
+
 export const apiRoutes = new Hono()
   .post(
     '/',
     zValidator('json', pasteCreateInputSchema),
     (c) => {
       const input = c.req.valid('json')
-      if (input.customId) {
-        // a taken id blocks reuse even when the old paste is expired;
-        // getLiveRow lazily deletes expired rows, freeing them for reuse
-        if (getLiveRow(input.customId)) {
+      if (input.link) {
+        // a taken link blocks reuse even when the old paste is expired;
+        // getLiveRowByLink lazily deletes expired rows, freeing them for reuse
+        if (getLiveRowByLink(input.link)) {
           return c.json({ error: 'This custom link is already taken' }, 409)
         }
       }
       const user = getSessionUser(c)
       const row = buildNewRow(input, user?.id ?? null)
       db.insert(pastes).values(row).run()
-      return c.json({ id: row.id }, 201)
+      return c.json({ link: row.link }, 201)
     },
   )
   .patch(
-    '/:id',
+    '/link/:link',
+    zValidator('param', pasteLinkParamsSchema),
+    zValidator('json', pasteUpdateInputSchema),
+    (c) => {
+      const { link } = c.req.valid('param')
+      const resolved = resolveUpdatable(c, getLiveRowByLink(link))
+      return 'response' in resolved
+        ? resolved.response
+        : applyUpdate(c, resolved.row, c.req.valid('json'))
+    },
+  )
+  .patch(
+    '/id/:id',
     zValidator('param', pasteIdParamsSchema),
     zValidator('json', pasteUpdateInputSchema),
     (c) => {
-      const user = getSessionUser(c)
-      if (!user) {
-        return c.json({ error: 'Not authenticated' }, 401)
-      }
       const { id } = c.req.valid('param')
-      const row = getLiveRow(id)
-      if (!row) {
-        return c.json({ error: 'Paste not found or expired' }, 404)
-      }
-      if (row.userId !== user.id) {
-        return c.json({ error: 'Not the paste owner' }, 403)
-      }
-
-      const input = c.req.valid('json')
-      const updates: Partial<NewPasteRow> = {}
-      if (input.title !== undefined) {
-        updates.title = input.title || null
-      }
-      if (input.language !== undefined) {
-        updates.language = input.language
-      }
-      if (input.content !== undefined) {
-        if (row.passwordHash !== null) {
-          // re-encrypting requires the current paste password
-          if (!input.password || !verifyPassword(input.password, row.passwordHash)) {
-            return c.json({ error: 'Invalid or missing password' }, 401)
-          }
-          Object.assign(updates, encryptContent(input.content, input.password), {
-            content: null,
-          })
-        }
-        else {
-          updates.content = input.content
-        }
-      }
-
-      if (Object.keys(updates).length === 0) {
-        return c.json({ error: 'Nothing to update' }, 400)
-      }
-      db.update(pastes).set(updates).where(eq(pastes.id, id)).run()
-      return c.json(toMeta({ ...row, ...updates }))
+      const resolved = resolveUpdatable(c, getLiveRowById(id))
+      return 'response' in resolved
+        ? resolved.response
+        : applyUpdate(c, resolved.row, c.req.valid('json'))
     },
   )
   .get(
-    '/:id/meta',
-    zValidator('param', pasteIdParamsSchema),
+    '/link/:link/meta',
+    zValidator('param', pasteLinkParamsSchema),
     (c) => {
-      const { id } = c.req.valid('param')
-      const row = getLiveRow(id)
+      const { link } = c.req.valid('param')
+      const row = getLiveRowByLink(link)
       if (!row) {
         return c.json({ error: 'Paste not found or expired' }, 404)
       }
@@ -249,30 +285,70 @@ export const apiRoutes = new Hono()
     },
   )
   .get(
-    '/:id/content',
+    '/id/:id/meta',
     zValidator('param', pasteIdParamsSchema),
     (c) => {
       const { id } = c.req.valid('param')
-      const result = readPaste(id, c.req.query('password'))
+      const row = getLiveRowById(id)
+      if (!row) {
+        return c.json({ error: 'Paste not found or expired' }, 404)
+      }
+      return c.json(toMeta(row))
+    },
+  )
+  .get(
+    '/link/:link/content',
+    zValidator('param', pasteLinkParamsSchema),
+    (c) => {
+      const { link } = c.req.valid('param')
+      const result = readByLink(link, c.req.query('password'))
       if (!result.ok) {
         return c.json({ error: result.message }, result.status)
       }
-      recordView(c, id, result.row.burnAfterRead)
+      recordView(c, result.row.id, result.row.burnAfterRead)
+      return c.json(toContentPayload(result.row, result.content))
+    },
+  )
+  .get(
+    '/id/:id/content',
+    zValidator('param', pasteIdParamsSchema),
+    (c) => {
+      const { id } = c.req.valid('param')
+      const result = readById(id, c.req.query('password'))
+      if (!result.ok) {
+        return c.json({ error: result.message }, result.status)
+      }
+      recordView(c, result.row.id, result.row.burnAfterRead)
       return c.json(toContentPayload(result.row, result.content))
     },
   )
 
 export const rawRoutes = new Hono()
   .get(
-    '/:id',
-    zValidator('param', pasteIdParamsSchema),
+    '/link/:link',
+    zValidator('param', pasteLinkParamsSchema),
     (c) => {
-      const { id } = c.req.valid('param')
-      const result = readPaste(id, c.req.query('password'))
+      const { link } = c.req.valid('param')
+      const result = readByLink(link, c.req.query('password'))
       if (!result.ok) {
         return c.text(result.message, result.status as 400 | 401 | 404)
       }
-      recordView(c, id, result.row.burnAfterRead)
+      recordView(c, result.row.id, result.row.burnAfterRead)
+      return c.text(result.content, 200, {
+        'Content-Type': 'text/plain; charset=utf-8',
+      })
+    },
+  )
+  .get(
+    '/id/:id',
+    zValidator('param', pasteIdParamsSchema),
+    (c) => {
+      const { id } = c.req.valid('param')
+      const result = readById(id, c.req.query('password'))
+      if (!result.ok) {
+        return c.text(result.message, result.status as 400 | 401 | 404)
+      }
+      recordView(c, result.row.id, result.row.burnAfterRead)
       return c.text(result.content, 200, {
         'Content-Type': 'text/plain; charset=utf-8',
       })

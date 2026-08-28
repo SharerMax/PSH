@@ -34,7 +34,7 @@ interface ViewAggregates {
   lastViewedAt: number | null
 }
 
-function getViewAggregates(pasteId: string): ViewAggregates {
+function getViewAggregates(pasteId: number): ViewAggregates {
   const [agg] = db
     .select({
       views: sql<number>`count(*)`.mapWith(Number),
@@ -63,6 +63,7 @@ export const mineRoutes = new Hono<{ Variables: { user: UserRow } }>()
       const { views, lastViewedAt } = getViewAggregates(row.id)
       items.push({
         id: row.id,
+        link: row.link,
         title: row.title,
         language: row.language,
         hasPassword: row.passwordHash !== null,
@@ -96,7 +97,7 @@ export const mineRoutes = new Hono<{ Variables: { user: UserRow } }>()
           ),
         })
         .from(pasteViews)
-        .where(eq(pasteViews.pasteId, id))
+        .where(eq(pasteViews.pasteId, row.id))
         .all()
 
       const byCountryRows = db
@@ -105,7 +106,7 @@ export const mineRoutes = new Hono<{ Variables: { user: UserRow } }>()
           count: sql<number>`count(*)`.mapWith(Number),
         })
         .from(pasteViews)
-        .where(eq(pasteViews.pasteId, id))
+        .where(eq(pasteViews.pasteId, row.id))
         .groupBy(pasteViews.country)
         .orderBy(desc(sql`count(*)`))
         .all()
@@ -117,14 +118,15 @@ export const mineRoutes = new Hono<{ Variables: { user: UserRow } }>()
           country: pasteViews.country,
         })
         .from(pasteViews)
-        .where(eq(pasteViews.pasteId, id))
+        .where(eq(pasteViews.pasteId, row.id))
         .orderBy(desc(pasteViews.viewedAt))
         .limit(50)
         .all()
 
       const geoEnabled = isGeoEnabled()
       const stats: PasteStats = {
-        id,
+        id: row.id,
+        link: row.link,
         totalViews: total?.views ?? 0,
         lastViewedAt:
           total?.lastViewedAt === null || total?.lastViewedAt === undefined
@@ -156,7 +158,7 @@ export const mineRoutes = new Hono<{ Variables: { user: UserRow } }>()
       }
 
       const query = c.req.valid('query')
-      const conditions: SQL[] = [eq(pasteViews.pasteId, id)]
+      const conditions: SQL[] = [eq(pasteViews.pasteId, row.id)]
       if (query.country) {
         conditions.push(eq(pasteViews.country, query.country))
       }

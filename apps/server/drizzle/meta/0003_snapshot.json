@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "f2b8c21f-65e0-43c5-bb18-ecceaedfc6a3",
-  "prevId": "67d89de6-3183-4326-b8bc-c935d5d5a7b7",
+  "id": "41472fc2-dc6b-4ea5-b898-844786a30300",
+  "prevId": "f2b8c21f-65e0-43c5-bb18-ecceaedfc6a3",
   "tables": {
     "paste_views": {
       "name": "paste_views",
@@ -16,7 +16,7 @@
         },
         "paste_id": {
           "name": "paste_id",
-          "type": "text",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -77,8 +77,15 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "text",
+          "type": "integer",
           "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "link": {
+          "name": "link",
+          "type": "text",
+          "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
@@ -170,6 +177,13 @@
         }
       },
       "indexes": {
+        "pastes_link_unique": {
+          "name": "pastes_link_unique",
+          "columns": [
+            "link"
+          ],
+          "isUnique": true
+        },
         "pastes_user_id_idx": {
           "name": "pastes_user_id_idx",
           "columns": [

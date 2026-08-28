@@ -22,6 +22,13 @@
       "when": 1787859913251,
       "tag": "0002_bizarre_sue_storm",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1787905279900,
+      "tag": "0003_rich_sauron",
+      "breakpoints": true
     }
   ]
 }

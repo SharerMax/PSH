@@ -33,7 +33,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ApiError, getPasteContent, getPasteMeta, getPasteStats, updatePaste } from '@/lib/api'
+import { getPasteContentById, getPasteMetaById, getPasteStats, updatePasteById } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 import { useI18n } from '@/lib/i18n'
 
@@ -56,6 +56,7 @@ export function PasteManage() {
   const { user, loading: authLoading } = useAuth()
 
   const [phase, setPhase] = useState<'loading' | 'gone' | 'ready'>('loading')
+  const [link, setLink] = useState('')
   const [hasPassword, setHasPassword] = useState(false)
   const [stats, setStats] = useState<PasteStats | null>(null)
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false)
@@ -77,9 +78,9 @@ export function PasteManage() {
     }
   }, [authLoading, user, navigate])
 
-  const loadContent = useCallback(async (pasteId: string, password?: string) => {
+  const loadContent = useCallback(async (pasteId: number, password?: string) => {
     try {
-      const payload = await getPasteContent(pasteId, password)
+      const payload = await getPasteContentById(pasteId, password)
       setTitle(payload.title ?? '')
       setLanguage(payload.language as PasteLanguage)
       setContent(payload.content)
@@ -93,15 +94,8 @@ export function PasteManage() {
     }
   }, [])
 
-  const loadStats = useCallback(async (pasteId: string) => {
-    try {
-      setStats(await getPasteStats(pasteId))
-    }
-    catch (error) {
-      if (error instanceof ApiError && error.status === 404) {
-        setPhase('gone')
-      }
-    }
+  const loadStats = useCallback(async (pasteId: number) => {
+    setStats(await getPasteStats(pasteId).catch(() => null))
   }, [])
 
   useEffect(() => {
@@ -112,18 +106,19 @@ export function PasteManage() {
 
     async function load() {
       try {
-        const meta = await getPasteMeta(id)
+        const meta = await getPasteMetaById(Number(id))
         if (cancelled)
           return
+        setLink(meta.link)
         setHasPassword(meta.hasPassword)
         setPhase('ready')
-        await loadStats(id)
+        loadStats(Number(id))
         if (meta.hasPassword) {
           setPasswordDialogOpen(true)
         }
         else if (!contentRequestedRef.current) {
           contentRequestedRef.current = true
-          await loadContent(id)
+          await loadContent(Number(id))
         }
       }
       catch {
@@ -145,7 +140,7 @@ export function PasteManage() {
       return
     setSubmittingPassword(true)
     try {
-      const unlocked = await loadContent(id, pastePassword)
+      const unlocked = await loadContent(Number(id), pastePassword)
       if (unlocked) {
         contentRequestedRef.current = true
         toast.success(t('toast.unlocked'))
@@ -181,14 +176,14 @@ export function PasteManage() {
 
     setSaving(true)
     try {
-      await updatePaste(id, {
+      await updatePasteById(Number(id), {
         title: title.trim() || undefined,
         language,
         content,
         password: hasPassword ? pastePassword : undefined,
       })
       toast.success(t('toast.pasteUpdated'))
-      await loadStats(id)
+      await loadStats(Number(id))
     }
     catch (error) {
       toast.error(error instanceof Error ? error.message : t('error.updateFailed'))
@@ -238,7 +233,7 @@ export function PasteManage() {
                 {t('nav.myPastes')}
               </Link>
             )}
-            beforeControls={<span className="font-mono text-xs">{id}</span>}
+            beforeControls={<span className="font-mono text-xs">{link}</span>}
           />
           <h1 className="text-3xl font-bold tracking-tight">{t('manage.title')}</h1>
           <div className="flex flex-wrap items-start gap-2">
@@ -246,7 +241,7 @@ export function PasteManage() {
               size="sm"
               variant="outline"
               nativeButton={false}
-              render={<Link to={`/${id}`} />}
+              render={<Link to={`/${link}`} />}
             >
               {t('action.viewPaste')}
             </Button>

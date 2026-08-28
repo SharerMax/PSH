@@ -29,7 +29,7 @@ export const router = createBrowserRouter([
     element: <PasteStatsPage />,
   },
   {
-    path: '/:id',
+    path: '/:link',
     element: <PasteView />,
   },
   {

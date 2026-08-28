@@ -30,7 +30,7 @@ export function Home() {
   const [language, setLanguage] = useState<PasteLanguage>('plaintext')
   const [content, setContent] = useState('')
   const [expiresIn, setExpiresIn] = useState<ExpiryOption>('forever')
-  const [customId, setCustomId] = useState('')
+  const [link, setLink] = useState('')
   const [password, setPassword] = useState('')
   const [burnAfterRead, setBurnAfterRead] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -47,25 +47,25 @@ export function Home() {
       toast.error(t('error.contentTooLarge'))
       return
     }
-    const trimmedCustomId = customId.trim()
-    if (trimmedCustomId && !/^[\w.-]{4,32}$/.test(trimmedCustomId)) {
+    const trimmedLink = link.trim()
+    if (trimmedLink && !/^[\w.-]{4,32}$/.test(trimmedLink)) {
       toast.error(t('error.customLinkInvalid'))
       return
     }
 
     setSubmitting(true)
     try {
-      const { id } = await createPaste({
+      const { link } = await createPaste({
         title: title.trim() || undefined,
         language,
         content,
         expiresIn,
         password: password || undefined,
         burnAfterRead,
-        customId: trimmedCustomId || undefined,
+        link: trimmedLink || undefined,
       })
       toast.success(t('toast.pasteCreated'))
-      navigate(`/${id}`)
+      navigate(`/${link}`)
     }
     catch (error) {
       if (error instanceof ApiError && error.status === 409) {
@@ -161,11 +161,11 @@ export function Home() {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <Label htmlFor="customId">{t('field.customLink')}</Label>
+                  <Label htmlFor="link">{t('field.customLink')}</Label>
                   <Input
-                    id="customId"
-                    value={customId}
-                    onChange={e => setCustomId(e.target.value)}
+                    id="link"
+                    value={link}
+                    onChange={e => setLink(e.target.value)}
                     placeholder={t('placeholder.customLink')}
                     maxLength={32}
                     autoComplete="off"

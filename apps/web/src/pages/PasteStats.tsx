@@ -83,7 +83,7 @@ export function PasteStatsPage() {
 
     async function load() {
       try {
-        const fetched = await getPasteStats(id)
+        const fetched = await getPasteStats(Number(id))
         if (!cancelled) {
           setStats(fetched)
           setPhase('ready')
@@ -111,7 +111,7 @@ export function PasteStatsPage() {
     }
     let cancelled = false
 
-    getPasteViews(id, {
+    getPasteViews(Number(id), {
       page,
       pageSize: PAGE_SIZE,
       country: country === 'ALL' ? undefined : country,
@@ -199,7 +199,7 @@ export function PasteStatsPage() {
     )
   }
 
-  const pasteUrl = `${window.location.origin}/${id}`
+  const pasteUrl = `${window.location.origin}/${stats.link}`
   const byCountry = stats.byCountry
   const counts = Object.fromEntries(byCountry.map(({ country, count }) => [country, count]))
   const top5 = byCountry.slice(0, 5)
@@ -217,7 +217,7 @@ export function PasteStatsPage() {
                 {t('manage.title')}
               </Link>
             )}
-            beforeControls={<span className="font-mono text-xs">{id}</span>}
+            beforeControls={<span className="font-mono text-xs">{stats.link}</span>}
           />
           <h1 className="text-3xl font-bold tracking-tight">{t('stats.title')}</h1>
           <div className="flex flex-wrap items-center gap-2">

@@ -35,7 +35,8 @@ export type NewSessionRow = typeof sessions.$inferInsert
 export const pastes = sqliteTable(
   'pastes',
   {
-    id: text('id').primaryKey(),
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    link: text('link').notNull().unique(),
     title: text('title'),
     language: text('language').notNull().default('plaintext'),
     content: text('content'),
@@ -63,7 +64,7 @@ export const pasteViews = sqliteTable(
   'paste_views',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
-    pasteId: text('paste_id')
+    pasteId: integer('paste_id')
       .notNull()
       .references(() => pastes.id, { onDelete: 'cascade' }),
     viewedAt: integer('viewed_at', { mode: 'timestamp_ms' })

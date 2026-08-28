@@ -71,6 +71,13 @@ variables:
 ### Backend (apps/server)
 
 - Routes are validated with `zValidator` and schemas imported from `@psh/shared`.
+- **Paste identity model**: `pastes.id` is an integer autoincrement PK (internal, used by
+  owner routes); `pastes.link` is the unique public slug (random 8 chars or custom
+  4–32 chars, shared via all URLs). Naming is strict everywhere — DB column, route
+  params (`/link/:link`, `/id/:id`), request/response fields and frontend variables all
+  use `id` for the integer key and `link` for the slug; never blur them. Public paste
+  routes are split explicitly: `/api/pastes/link/:link/...` and `/api/pastes/id/:id/...`
+  (same for `/raw/link/:link`, `/raw/id/:id`) — no dual-lookup fallback.
 - Passwords: scrypt hashing (`lib/crypto.ts`). Protected paste bodies are AES-256-GCM encrypted;
   plaintext lives in `content` only when no password is set.
 - Expiry: lazy deletion on read plus a 10-minute sweep interval.
@@ -80,13 +87,15 @@ variables:
   Sessions are DB-backed (`users`/`sessions` tables) with a random token in an HttpOnly
   cookie (30 days); helpers live in `lib/auth.ts` (`requireAuth` middleware,
   `getUser(c)`). Anonymous use of all paste endpoints is unaffected — auth only gates
-  ownership features. Owner-only endpoints: `PATCH /api/pastes/:id` (edit content in
-  place, link unchanged), `/api/mine` (list), `/api/mine/:id/stats`, and
-  `/api/mine/:id/views` (paginated records with country/IP/time-range filters, schemas
-  shared via `pasteViewsQuerySchema`/`pasteViewsPageSchema`).
+  ownership features. Owner-only endpoints: `PATCH /api/pastes/{link,id}/…` (edit content
+  in place, link unchanged), `/api/mine` (list, items carry both `id` and `link`),
+  `/api/mine/:id/stats`, and `/api/mine/:id/views` (integer-id addressing, paginated
+  records with country/IP/time-range filters, schemas shared via
+  `pasteViewsQuerySchema`/`pasteViewsPageSchema`).
 - **View tracking**: every content read inserts a `paste_views` row (timestamp, IP,
-  country). GeoIP lookup is in `lib/geoip.ts` — synchronous `mmdb-lib` reader initialized
-  from `MMDB_PATH`; never make it async or move it to request time.
+  country) referencing the integer paste id. GeoIP lookup is in `lib/geoip.ts` —
+  synchronous `mmdb-lib` reader initialized from `MMDB_PATH`; never make it async or move
+  it to request time.
 
 ### Shared package (packages/shared)
 
@@ -117,8 +126,9 @@ variables:
 1. `pnpm typecheck` passes
 2. `pnpm lint` passes
 3. If server behavior changed: smoke test with `curl` against `localhost:3000`
-   (`POST /api/pastes`, `/api/pastes/:id/meta`, `/api/pastes/:id/content?password=`, `/raw/:id`);
-   for auth/owner features also cover register → login (cookie) → create → stats/views → edit
+   (`POST /api/pastes`, `/api/pastes/link/:link/meta`, `/api/pastes/id/:id/content?password=`,
+   `/raw/link/:link`); for auth/owner features also cover register → login (cookie) →
+   create → `/api/mine` → stats/views → edit (by id or link)
 4. If web behavior changed: verify visually against the dev server on `:5173`
 
 ## External references

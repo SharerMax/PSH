@@ -28,15 +28,15 @@ export const PASTE_LANGUAGES = [
 ] as const
 export type PasteLanguage = (typeof PASTE_LANGUAGES)[number]
 
-export const CUSTOM_ID_MIN = 4
-export const CUSTOM_ID_MAX = 32
+export const LINK_MIN = 4
+export const LINK_MAX = 32
 
-export const customIdSchema = z
+export const linkSchema = z
   .string()
   .trim()
-  .min(CUSTOM_ID_MIN, `custom link must be at least ${CUSTOM_ID_MIN} characters`)
-  .max(CUSTOM_ID_MAX)
-  .regex(/^[\w.-]+$/, 'custom link may only contain letters, digits, dots, dashes and underscores')
+  .min(LINK_MIN, `link must be at least ${LINK_MIN} characters`)
+  .max(LINK_MAX)
+  .regex(/^[\w.-]+$/, 'link may only contain letters, digits, dots, dashes and underscores')
 
 export const pasteCreateInputSchema = z.object({
   title: z.string().trim().max(200).optional(),
@@ -45,12 +45,12 @@ export const pasteCreateInputSchema = z.object({
   expiresIn: z.enum(EXPIRY_OPTIONS).optional(),
   password: z.string().min(1).max(256).optional(),
   burnAfterRead: z.boolean().optional(),
-  customId: customIdSchema.optional(),
+  link: linkSchema.optional(),
 })
 export type PasteCreateInput = z.infer<typeof pasteCreateInputSchema>
 
 export const pasteMetaSchema = z.object({
-  id: z.string(),
+  link: z.string(),
   title: z.string().nullable(),
   language: z.string(),
   hasPassword: z.boolean(),
@@ -61,7 +61,7 @@ export const pasteMetaSchema = z.object({
 export type PasteMeta = z.infer<typeof pasteMetaSchema>
 
 export const pasteContentSchema = z.object({
-  id: z.string(),
+  link: z.string(),
   title: z.string().nullable(),
   language: z.string(),
   content: z.string(),
@@ -70,13 +70,20 @@ export const pasteContentSchema = z.object({
 })
 export type PasteContent = z.infer<typeof pasteContentSchema>
 
+/** Public link-based route param (4-32 chars). */
+export const pasteLinkParamsSchema = z.object({
+  link: linkSchema,
+})
+export type PasteLinkParams = z.infer<typeof pasteLinkParamsSchema>
+
+/** Integer paste id for owner-only routes (URL params arrive as strings). */
 export const pasteIdParamsSchema = z.object({
-  id: z.string().regex(/^[\w.-]{4,32}$/, 'invalid paste id'),
+  id: z.coerce.number().int().positive(),
 })
 export type PasteIdParams = z.infer<typeof pasteIdParamsSchema>
 
 export const pasteCreatedResponseSchema = z.object({
-  id: z.string(),
+  link: z.string(),
 })
 export type PasteCreatedResponse = z.infer<typeof pasteCreatedResponseSchema>
 
@@ -113,7 +120,8 @@ export const userSchema = z.object({
 export type User = z.infer<typeof userSchema>
 
 export const myPasteItemSchema = z.object({
-  id: z.string(),
+  id: z.number().int().nonnegative(),
+  link: z.string(),
   title: z.string().nullable(),
   language: z.string(),
   hasPassword: z.boolean(),
@@ -129,7 +137,8 @@ export const myPasteListSchema = z.array(myPasteItemSchema)
 export type MyPasteList = z.infer<typeof myPasteListSchema>
 
 export const pasteStatsSchema = z.object({
-  id: z.string(),
+  id: z.number().int().nonnegative(),
+  link: z.string(),
   totalViews: z.number().int().nonnegative(),
   lastViewedAt: z.string().nullable(),
   geoEnabled: z.boolean(),

@@ -141,7 +141,7 @@ function MyPasteRow({ item, now }: { item: MyPasteItem, now: number }) {
     <Card>
       <CardHeader>
         <CardTitle className="flex flex-wrap items-center gap-2 text-base">
-          <Link to={`/${item.id}`} className="hover:underline">
+          <Link to={`/${item.link}`} className="hover:underline">
             {item.title ?? t('view.untitled')}
           </Link>
           <Badge variant="secondary">{item.language}</Badge>
@@ -160,7 +160,7 @@ function MyPasteRow({ item, now }: { item: MyPasteItem, now: number }) {
           {expired && <Badge variant="destructive">{t('badge.expired')}</Badge>}
         </CardTitle>
         <CardDescription className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          <span className="font-mono text-xs">{item.id}</span>
+          <span className="font-mono text-xs">{item.link}</span>
           <span>{formatDate(item.createdAt, locale)}</span>
           {expiresAtTime !== null && !expired && (
             <span>{t('badge.expiresIn', { time: formatDuration(expiresAtTime - now, locale) })}</span>

@@ -66,7 +66,7 @@ async function highlight(code: string, language: string, theme: string): Promise
 }
 
 export function PasteView() {
-  const { id = '' } = useParams()
+  const { link = '' } = useParams()
   const { t, locale } = useI18n()
   const { resolvedTheme } = useTheme()
 
@@ -90,9 +90,9 @@ export function PasteView() {
   // guards against StrictMode double-invocation burning a paste twice
   const contentRequestedRef = useRef(false)
 
-  const loadContent = useCallback(async (pasteId: string, pastePassword?: string) => {
+  const loadContent = useCallback(async (pasteLink: string, pastePassword?: string) => {
     try {
-      const payload = await getPasteContent(pasteId, pastePassword)
+      const payload = await getPasteContent(pasteLink, pastePassword)
       setContent(payload.content)
       setPasswordDialogOpen(false)
       setPasswordErrorKey(null)
@@ -128,7 +128,7 @@ export function PasteView() {
 
     async function load() {
       try {
-        const fetchedMeta = await getPasteMeta(id)
+        const fetchedMeta = await getPasteMeta(link)
         if (cancelled)
           return
 
@@ -142,7 +142,7 @@ export function PasteView() {
 
         if (!contentRequestedRef.current) {
           contentRequestedRef.current = true
-          await loadContent(id)
+          await loadContent(link)
         }
       }
       catch (error) {
@@ -159,7 +159,7 @@ export function PasteView() {
     return () => {
       cancelled = true
     }
-  }, [id, loadContent])
+  }, [link, loadContent])
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000)
@@ -183,7 +183,7 @@ export function PasteView() {
     const url = URL.createObjectURL(blob)
     const anchor = document.createElement('a')
     anchor.href = url
-    anchor.download = `${id}.txt`
+    anchor.download = `${link}.txt`
     anchor.click()
     URL.revokeObjectURL(url)
     toast.success(t('toast.downloadStarted'))
@@ -196,7 +196,7 @@ export function PasteView() {
 
     setSubmittingPassword(true)
     try {
-      const unlocked = await loadContent(id, password)
+      const unlocked = await loadContent(link, password)
       if (unlocked) {
         toast.success(t('toast.unlocked'))
         setPassword('')
@@ -252,14 +252,14 @@ export function PasteView() {
   const expiresAtTime = meta.expiresAt ? new Date(meta.expiresAt).getTime() : null
   const expired = expiresAtTime !== null && expiresAtTime <= now
   const burned = meta.burnAfterRead && content !== null
-  const rawHref = `/raw/${id}`
+  const rawHref = `/raw/link/${link}`
   const locked = content === null
 
   return (
     <main className="bg-background min-h-dvh">
       <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-10">
         <header className="flex flex-col gap-2">
-          <PageHeader beforeControls={<span className="font-mono text-xs">{id}</span>} />
+          <PageHeader beforeControls={<span className="font-mono text-xs">{link}</span>} />
           <h1 className="truncate text-3xl font-bold tracking-tight">
             {meta.title ?? t('view.untitled')}
           </h1>

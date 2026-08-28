@@ -49,13 +49,22 @@ export function createPaste(input: PasteCreateInput): Promise<PasteCreatedRespon
   })
 }
 
-export function getPasteMeta(id: string): Promise<PasteMeta> {
-  return request(`/api/pastes/${id}/meta`, pasteMetaSchema)
+export function getPasteMeta(link: string): Promise<PasteMeta> {
+  return request(`/api/pastes/link/${link}/meta`, pasteMetaSchema)
 }
 
-export function getPasteContent(id: string, password?: string): Promise<PasteContent> {
+export function getPasteMetaById(id: number): Promise<PasteMeta> {
+  return request(`/api/pastes/id/${id}/meta`, pasteMetaSchema)
+}
+
+export function getPasteContent(link: string, password?: string): Promise<PasteContent> {
   const query = password ? `?password=${encodeURIComponent(password)}` : ''
-  return request(`/api/pastes/${id}/content${query}`, pasteContentSchema)
+  return request(`/api/pastes/link/${link}/content${query}`, pasteContentSchema)
+}
+
+export function getPasteContentById(id: number, password?: string): Promise<PasteContent> {
+  const query = password ? `?password=${encodeURIComponent(password)}` : ''
+  return request(`/api/pastes/id/${id}/content${query}`, pasteContentSchema)
 }
 
 export function register(input: AuthInput): Promise<User> {
@@ -86,11 +95,11 @@ export function getMyPastes(): Promise<MyPasteList> {
   return request('/api/mine', myPasteListSchema)
 }
 
-export function getPasteStats(id: string): Promise<PasteStats> {
+export function getPasteStats(id: number): Promise<PasteStats> {
   return request(`/api/mine/${id}/stats`, pasteStatsSchema)
 }
 
-export function getPasteViews(id: string, query: Partial<PasteViewsQuery>): Promise<PasteViewsPage> {
+export function getPasteViews(id: number, query: Partial<PasteViewsQuery>): Promise<PasteViewsPage> {
   const params = new URLSearchParams()
   if (query.page) {
     params.set('page', String(query.page))
@@ -114,8 +123,16 @@ export function getPasteViews(id: string, query: Partial<PasteViewsQuery>): Prom
   return request(`/api/mine/${id}/views${qs ? `?${qs}` : ''}`, pasteViewsPageSchema)
 }
 
-export function updatePaste(id: string, input: PasteUpdateInput): Promise<PasteMeta> {
-  return request(`/api/pastes/${id}`, pasteMetaSchema, {
+export function updatePaste(link: string, input: PasteUpdateInput): Promise<PasteMeta> {
+  return request(`/api/pastes/link/${link}`, pasteMetaSchema, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+}
+
+export function updatePasteById(id: number, input: PasteUpdateInput): Promise<PasteMeta> {
+  return request(`/api/pastes/id/${id}`, pasteMetaSchema, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
