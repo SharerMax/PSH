@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { createPaste } from '@/lib/api'
+import { ApiError, createPaste } from '@/lib/api'
 import { useI18n } from '@/lib/i18n'
 
 const MAX_CONTENT_BYTES = 1024 * 1024
@@ -30,6 +30,7 @@ export function Home() {
   const [language, setLanguage] = useState<PasteLanguage>('plaintext')
   const [content, setContent] = useState('')
   const [expiresIn, setExpiresIn] = useState<ExpiryOption>('forever')
+  const [customId, setCustomId] = useState('')
   const [password, setPassword] = useState('')
   const [burnAfterRead, setBurnAfterRead] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -46,6 +47,11 @@ export function Home() {
       toast.error(t('error.contentTooLarge'))
       return
     }
+    const trimmedCustomId = customId.trim()
+    if (trimmedCustomId && !/^[\w.-]{4,32}$/.test(trimmedCustomId)) {
+      toast.error(t('error.customLinkInvalid'))
+      return
+    }
 
     setSubmitting(true)
     try {
@@ -56,12 +62,18 @@ export function Home() {
         expiresIn,
         password: password || undefined,
         burnAfterRead,
+        customId: trimmedCustomId || undefined,
       })
       toast.success(t('toast.pasteCreated'))
       navigate(`/${id}`)
     }
     catch (error) {
-      toast.error(error instanceof Error ? error.message : t('error.createFailed'))
+      if (error instanceof ApiError && error.status === 409) {
+        toast.error(t('error.customLinkTaken'))
+      }
+      else {
+        toast.error(error instanceof Error ? error.message : t('error.createFailed'))
+      }
     }
     finally {
       setSubmitting(false)
@@ -146,6 +158,19 @@ export function Home() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="customId">{t('field.customLink')}</Label>
+                  <Input
+                    id="customId"
+                    value={customId}
+                    onChange={e => setCustomId(e.target.value)}
+                    placeholder={t('placeholder.customLink')}
+                    maxLength={32}
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
                 </div>
 
                 <div className="flex flex-col gap-2">

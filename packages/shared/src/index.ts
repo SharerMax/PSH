@@ -28,6 +28,16 @@ export const PASTE_LANGUAGES = [
 ] as const
 export type PasteLanguage = (typeof PASTE_LANGUAGES)[number]
 
+export const CUSTOM_ID_MIN = 4
+export const CUSTOM_ID_MAX = 32
+
+export const customIdSchema = z
+  .string()
+  .trim()
+  .min(CUSTOM_ID_MIN, `custom link must be at least ${CUSTOM_ID_MIN} characters`)
+  .max(CUSTOM_ID_MAX)
+  .regex(/^[\w.-]+$/, 'custom link may only contain letters, digits, dots, dashes and underscores')
+
 export const pasteCreateInputSchema = z.object({
   title: z.string().trim().max(200).optional(),
   language: z.string().trim().max(64).default('plaintext').catch('plaintext'),
@@ -35,6 +45,7 @@ export const pasteCreateInputSchema = z.object({
   expiresIn: z.enum(EXPIRY_OPTIONS).optional(),
   password: z.string().min(1).max(256).optional(),
   burnAfterRead: z.boolean().optional(),
+  customId: customIdSchema.optional(),
 })
 export type PasteCreateInput = z.infer<typeof pasteCreateInputSchema>
 
@@ -60,7 +71,7 @@ export const pasteContentSchema = z.object({
 export type PasteContent = z.infer<typeof pasteContentSchema>
 
 export const pasteIdParamsSchema = z.object({
-  id: z.string().regex(/^[\w-]{8}$/, 'invalid paste id'),
+  id: z.string().regex(/^[\w.-]{4,32}$/, 'invalid paste id'),
 })
 export type PasteIdParams = z.infer<typeof pasteIdParamsSchema>
 

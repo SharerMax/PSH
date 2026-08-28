@@ -146,9 +146,10 @@ function buildNewRow(input: {
   expiresIn?: '10min' | '1h' | '1d' | '7d' | 'forever'
   password?: string
   burnAfterRead?: boolean
+  customId?: string
 }, userId: string | null): NewPasteRow {
   const base = {
-    id: newPasteId(),
+    id: input.customId ?? newPasteId(),
     title: input.title || null,
     language: input.language,
     burnAfterRead: input.burnAfterRead ?? false,
@@ -174,6 +175,13 @@ export const apiRoutes = new Hono()
     zValidator('json', pasteCreateInputSchema),
     (c) => {
       const input = c.req.valid('json')
+      if (input.customId) {
+        // a taken id blocks reuse even when the old paste is expired;
+        // getLiveRow lazily deletes expired rows, freeing them for reuse
+        if (getLiveRow(input.customId)) {
+          return c.json({ error: 'This custom link is already taken' }, 409)
+        }
+      }
       const user = getSessionUser(c)
       const row = buildNewRow(input, user?.id ?? null)
       db.insert(pastes).values(row).run()
