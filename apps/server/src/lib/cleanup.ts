@@ -1,15 +1,10 @@
-import { and, isNotNull, lt } from 'drizzle-orm'
-import { db } from '../db'
-import { pastes } from '../db/schema'
-import { purgeExpiredSessions } from './auth'
+import { deleteExpiredPastes } from '../repositories/paste-repository'
+import { deleteExpiredSessions } from '../repositories/session-repository'
 
 export function purgeExpired(): number {
-  const result = db
-    .delete(pastes)
-    .where(and(isNotNull(pastes.expiresAt), lt(pastes.expiresAt, new Date())))
-    .run()
-  purgeExpiredSessions()
-  return result.changes
+  const result = deleteExpiredPastes()
+  deleteExpiredSessions()
+  return result
 }
 
 export function startCleanupInterval(intervalMs = 10 * 60 * 1000): NodeJS.Timeout {

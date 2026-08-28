@@ -71,6 +71,14 @@ variables:
 ### Backend (apps/server)
 
 - Routes are validated with `zValidator` and schemas imported from `@psh/shared`.
+- **Layered structure** (keep responsibilities strict, top-down):
+  `routes/` (path wiring + zValidator only) → `controllers/` (HTTP concerns: auth checks,
+  client IP, response shaping) → `services/` (business logic: expiry, crypto, stats,
+  sessions) → `repositories/` (drizzle data access) → `db/schema.ts`. Cross-cutting
+  helpers (crypto, geoip, id, cookie config) live in `lib/`; shared middleware lives in
+  `middleware/`. Services never touch Hono `Context`; controllers never issue drizzle
+  queries directly. Server source file names are kebab-case with a layer suffix separated
+  by a hyphen (`paste-controller.ts`, `paste-service.ts`, `paste-repository.ts`).
 - **Paste identity model**: `pastes.id` is an integer autoincrement PK (internal, used by
   owner routes); `pastes.link` is the unique public slug (random 8 chars or custom
   4–32 chars, shared via all URLs). Naming is strict everywhere — DB column, route
@@ -83,12 +91,13 @@ variables:
 - Expiry: lazy deletion on read plus a 10-minute sweep interval.
 - Drizzle migrations live in `apps/server/drizzle` and run automatically at startup — commit
   generated SQL after schema changes.
-- **User accounts & sessions**: username/password registration + login (`routes/auth.ts`).
-  Sessions are DB-backed (`users`/`sessions` tables) with a random token in an HttpOnly
-  cookie (30 days); helpers live in `lib/auth.ts` (`requireAuth` middleware,
-  `getUser(c)`). Anonymous use of all paste endpoints is unaffected — auth only gates
-  ownership features. Owner-only endpoints: `PATCH /api/pastes/{link,id}/…` (edit content
-  in place, link unchanged), `/api/mine` (list, items carry both `id` and `link`),
+- **User accounts & sessions**: username/password registration + login (`controllers/auth-controller.ts`,
+  business logic in `services/auth-service.ts`). Sessions are DB-backed (`users`/`sessions`
+  tables) with a random token in an HttpOnly cookie (30 days); cookie config/helpers live
+  in `lib/auth.ts`, and `requireUser()` middleware / `getUser(c)` live in
+  `middleware/auth.ts`. Anonymous use of all paste endpoints is unaffected — auth only
+  gates ownership features. Owner-only endpoints: `PATCH /api/pastes/{link,id}/…` (edit
+  content in place, link unchanged), `/api/mine` (list, items carry both `id` and `link`),
   `/api/mine/:id/stats`, and `/api/mine/:id/views` (integer-id addressing, paginated
   records with country/IP/time-range filters, schemas shared via
   `pasteViewsQuerySchema`/`pasteViewsPageSchema`).

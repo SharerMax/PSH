@@ -129,7 +129,7 @@ Create body:
 
 ```
 apps/
-  server/   Hono api, auth & sessions, geoip, drizzle schema/migrations, crypto & cleanup libs
+  server/   Hono api (routes → controllers → services → repositories), auth & sessions, geoip, drizzle schema/migrations, crypto & cleanup libs
   web/      React SPA (Vite), shadcn/ui components, pages (viewer, editor, my pastes, stats)
 packages/
   shared/   zod schemas + shared types (TS source, no build step)
