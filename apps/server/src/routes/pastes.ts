@@ -32,6 +32,13 @@ export const apiRoutes = new Hono()
       return paste.patchById(c, c.req.valid('param').id, c.req.valid('json'))
     },
   )
+  .delete(
+    '/id/:id',
+    zValidator('param', pasteIdParamsSchema),
+    (c) => {
+      return paste.removeById(c, c.req.valid('param').id)
+    },
+  )
   .get(
     '/link/:link/meta',
     zValidator('param', pasteLinkParamsSchema),

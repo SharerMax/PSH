@@ -97,7 +97,8 @@ variables:
   in `lib/auth.ts`, and `requireUser()` middleware / `getUser(c)` live in
   `middleware/auth.ts`. Anonymous use of all paste endpoints is unaffected — auth only
   gates ownership features. Owner-only endpoints: `PATCH /api/pastes/{link,id}/…` (edit
-  content in place, link unchanged), `/api/mine` (list, items carry both `id` and `link`),
+  content in place, link unchanged), `DELETE /api/pastes/id/:id` (owner delete),
+  `/api/mine` (list, items carry both `id` and `link`),
   `/api/mine/:id/stats`, and `/api/mine/:id/views` (integer-id addressing, paginated
   records with country/IP/time-range filters, schemas shared via
   `pasteViewsQuerySchema`/`pasteViewsPageSchema`).

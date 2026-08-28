@@ -1,6 +1,6 @@
 import type { PasteLanguage, PasteStats } from '@psh/shared'
 import { PASTE_LANGUAGES } from '@psh/shared'
-import { GlobeIcon } from 'lucide-react'
+import { GlobeIcon, Trash2Icon } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
@@ -33,7 +33,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { getPasteContentById, getPasteMetaById, getPasteStats, updatePasteById } from '@/lib/api'
+import { deletePasteById, getPasteContentById, getPasteMetaById, getPasteStats, updatePasteById } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 import { useI18n } from '@/lib/i18n'
 
@@ -60,6 +60,8 @@ export function PasteManage() {
   const [hasPassword, setHasPassword] = useState(false)
   const [stats, setStats] = useState<PasteStats | null>(null)
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [pastePassword, setPastePassword] = useState('')
   const [passwordError, setPasswordError] = useState(false)
   const [submittingPassword, setSubmittingPassword] = useState(false)
@@ -148,6 +150,24 @@ export function PasteManage() {
     }
     finally {
       setSubmittingPassword(false)
+    }
+  }
+
+  async function handleDelete() {
+    if (deleting)
+      return
+    setDeleting(true)
+    try {
+      await deletePasteById(Number(id))
+      toast.success(t('toast.pasteDeleted'))
+      navigate('/mine')
+    }
+    catch {
+      toast.error(t('error.deleteFailed'))
+    }
+    finally {
+      setDeleting(false)
+      setDeleteDialogOpen(false)
     }
   }
 
@@ -252,6 +272,15 @@ export function PasteManage() {
               render={<Link to={`/mine/${id}/stats`} />}
             >
               {t('stats.title')}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-destructive hover:text-destructive"
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              <Trash2Icon data-icon="inline-start" />
+              {t('action.delete')}
             </Button>
           </div>
           {stats && stats.totalViews > 0 && (
@@ -368,6 +397,25 @@ export function PasteManage() {
             </form>
           </CardContent>
         </Card>
+
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t('dialog.deleteTitle')}</DialogTitle>
+              <DialogDescription>
+                {t('dialog.deleteDescription', { title: title.trim() || link || t('view.untitled') })}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                {t('action.cancel')}
+              </Button>
+              <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+                {deleting ? t('action.deleting') : t('action.delete')}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <Dialog open={passwordDialogOpen} onOpenChange={handleDialogOpenChange}>
           <DialogContent showCloseButton={false}>

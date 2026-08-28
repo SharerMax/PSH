@@ -123,6 +123,10 @@ export function getPasteViews(id: number, query: Partial<PasteViewsQuery>): Prom
   return request(`/api/mine/${id}/views${qs ? `?${qs}` : ''}`, pasteViewsPageSchema)
 }
 
+export function deletePasteById(id: number): Promise<{ ok: boolean }> {
+  return request(`/api/pastes/id/${id}`, z.object({ ok: z.boolean() }), { method: 'DELETE' })
+}
+
 export function updatePaste(link: string, input: PasteUpdateInput): Promise<PasteMeta> {
   return request(`/api/pastes/link/${link}`, pasteMetaSchema, {
     method: 'PATCH',

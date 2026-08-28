@@ -164,6 +164,16 @@ export function createPaste(input: PasteCreateInput, userId: string | null): Cre
   return { ok: true, link: row.link }
 }
 
+/** Delete a paste owned by the given user; false when missing or not owned. */
+export function deleteOwnedPaste(id: number, userId: string): boolean {
+  const row = findPasteById(id)
+  if (!row || row.userId !== userId) {
+    return false
+  }
+  deletePasteById(id)
+  return true
+}
+
 export type UpdatePasteResult
   = | { ok: true, meta: PasteMeta }
     | { ok: false, status: 400 | 401, message: string }

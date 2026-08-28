@@ -103,6 +103,7 @@ resolves by link, `/id/:id` by integer id.
 | GET    | `/raw/id/:id?password=`               | Raw content by integer id                          |
 | PATCH  | `/api/pastes/link/:link`              | Owner: edit by link (title/language/content)       |
 | PATCH  | `/api/pastes/id/:id`                  | Owner: edit by integer id                          |
+| DELETE | `/api/pastes/id/:id`                  | Owner: delete paste by integer id                  |
 | POST   | `/api/auth/register`                  | Create account (username + password)               |
 | POST   | `/api/auth/login`                     | Log in → sets session cookie                       |
 | POST   | `/api/auth/logout`                    | Destroy current session                            |

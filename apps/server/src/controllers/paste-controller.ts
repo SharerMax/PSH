@@ -6,6 +6,7 @@ import { getRequestIp } from '../lib/geoip'
 import { getSessionUser } from '../services/auth-service'
 import {
   createPaste,
+  deleteOwnedPaste,
   getLivePasteById,
   getLivePasteByLink,
   readPasteById,
@@ -56,6 +57,18 @@ export function patchById(c: Context, id: number, input: PasteUpdateInput): Resp
   }
   const result = updatePaste(resolved.row, input)
   return result.ok ? c.json(result.meta) : c.json({ error: result.message }, result.status)
+}
+
+export function removeById(c: Context, id: number): Response {
+  const user = getSessionUser(getSessionToken(c))
+  if (!user) {
+    return c.json({ error: 'Not authenticated' }, 401)
+  }
+  if (!deleteOwnedPaste(id, user.id)) {
+    // 404 also covers "exists but not owned" to avoid leaking existence
+    return c.json({ error: 'Paste not found' }, 404)
+  }
+  return c.json({ ok: true })
 }
 
 export function metaByLink(c: Context, link: string): Response {
