@@ -79,6 +79,23 @@ Notes:
   directory there to persist pastes across upgrades (host binds must be writable by uid 1000)
 - Port/env overrides work the same as local runs (`PORT`, `DATABASE_PATH` defaults come
   baked into the image)
+- Country statistics (optional): mount a MaxMind `.mmdb` file into the container and
+  point `MMDB_PATH` at it — e.g. with compose:
+
+  ```yaml
+  environment:
+    MMDB_PATH: /mmdb/GeoLite2-Country.mmdb
+  volumes:
+    - ./mmdb:/mmdb:ro
+  ```
+
+  or plain docker: `docker run -d -p 3000:3000 -v psh-data:/app/data -v ./mmdb:/mmdb:ro
+  -e MMDB_PATH=/mmdb/GeoLite2-Country.mmdb ghcr.io/sharermax/psh:latest`.
+  When unset, geo stats are disabled and the UI hides country data. Pre-built
+  GeoLite2 Country `.mmdb` files can be grabbed from
+  [P3TERX/GeoLite.mmdb](https://github.com/P3TERX/GeoLite.mmdb) (updated daily,
+  based on MaxMind GeoLite2 — mind its
+  [EULA](https://www.maxmind.com/en/geolite2/eula))
 - The first published package is private on GHCR; flip it to public in the repo's
   Packages settings if you want anonymous pulls
 
