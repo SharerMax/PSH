@@ -1,4 +1,4 @@
-# AGENT.md
+# AGENTS.md
 
 Guidance for AI agents working on this repository.
 
@@ -25,9 +25,9 @@ pnpm lint:fix                # eslint . --fix
 pnpm --filter @psh/server db:generate   # regenerate drizzle migrations after schema edits
 ```
 
-The server's `dev` and `start` scripts run Node with `--env-file-if-exists=.env`, so local
-dev/test config lives in `apps/server/.env` (gitignored; see `.env.example`). Supported
-variables:
+Requires Node ≥ 24: the server's `dev`/`start` scripts run Node with `--env-file-if-exists=.env`
+and the dev script relies on the native `--watch` flag, so local dev/test config lives in
+`apps/server/.env` (gitignored; see `.env.example`). Supported variables:
 
 | Variable       | Effect                                                                        |
 | -------------- | ----------------------------------------------------------------------------- |
@@ -203,9 +203,9 @@ Base UI (`@base-ui/react`), whose conventions differ from Radix (`render=` inste
 
 ## Git
 
-- Conventional Commits, English imperative subject ≤ 72 chars.
+- Conventional Commits, English imperative subject ≤ 72 chars; scope follows the package
+  (`feat(server):`, `feat(web):`, `docs:`, `chore:` …).
 - Non-trivial changes need a body: blank line then `-` bullet list.
-- Commit scope follows subprojects (`feat(web):`, `feat(server):`, `chore:` …).
 - **Split commits strictly by package, in dependency order**: `packages/shared` first
   (schema/type changes both sides depend on), then `apps/server`, then `apps/web`.
   Never mix files from different packages in one commit; cross-package changes land as

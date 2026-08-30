@@ -15,7 +15,11 @@ A self-hosted Pastebin-style snippet sharing service. Monorepo managed with pnpm
 ## Features
 
 - Anonymous or logged-in usage — accounts are only needed for owner features
-- User accounts: username/password registration, DB-backed sessions (HttpOnly cookie, 30 days)
+- User accounts: username/password registration, DB-backed sessions (HttpOnly cookie, 30 days); the first registered user automatically becomes the administrator
+- Profile page with password change (revokes sessions on other devices)
+- Admin: user management (search, ban/unban, reset password, delete) and paste
+  management (search/filter, delete) over all users' pastes; banned users cannot sign
+  in and their sessions are revoked immediately
 - Create pastes with optional title, syntax language, expiry (`10min/1h/1d/7d/forever`), password and burn-after-read
 - Optional custom link (4–32 chars, letters/digits/dots/dashes/underscores); otherwise an 8-char random link is generated
 - Password-protected pastes are stored AES-256-GCM encrypted (scrypt-derived key); passwords hashed with scrypt
@@ -111,10 +115,16 @@ resolves by link, `/id/:id` by integer id.
 | GET    | `/api/pastes/link/:link/favorite`     | Owner: favorite status → `{ favorited }` (`401` when anonymous) |
 | POST   | `/api/pastes/link/:link/favorite`     | Owner: add favorite (idempotent)                   |
 | DELETE | `/api/pastes/link/:link/favorite`     | Owner: remove favorite (idempotent)                |
-| POST   | `/api/auth/register`                  | Create account (username + password)               |
-| POST   | `/api/auth/login`                     | Log in → sets session cookie                       |
+| POST   | `/api/auth/register`                  | Create account (username + password); first account gets the `admin` role |
+| POST   | `/api/auth/login`                     | Log in → sets session cookie                        |
 | POST   | `/api/auth/logout`                    | Destroy current session                            |
-| GET    | `/api/auth/me`                        | Current user (`401` when anonymous)                |
+| GET    | `/api/auth/me`                        | Current user incl. `role` (`401` when anonymous)   |
+| POST   | `/api/auth/password`                  | Owner: change password (verifies current password, revokes other sessions) |
+| GET    | `/api/admin/users`                    | Admin: paginated user list (`page`, `pageSize`, `q`); rows carry `role`, `banned`, `pasteCount` |
+| PATCH  | `/api/admin/users/:id`                | Admin: ban/unban (`banned`) and/or reset password (`password`); revokes the user's sessions |
+| DELETE | `/api/admin/users/:id`                | Admin: delete user together with their pastes (`400` when targeting self) |
+| GET    | `/api/admin/pastes`                   | Admin: all live pastes; same pagination/filter params as `/api/mine`, rows carry `username` |
+| DELETE | `/api/admin/pastes/id/:id`            | Admin: delete any paste by integer id              |
 | GET    | `/api/mine`                           | Owner: list own pastes (`{ id, link, … }` items with view counts); paginated + filtered (`page`, `pageSize` (default 20, max 100), `q`, `language`, `from`, `to`) |
 | GET    | `/api/mine/favorites`                 | Owner: list favorited pastes; same pagination/filter params |
 | GET    | `/api/mine/:id/stats`                 | Owner: aggregate stats by integer id (views, last access, by country) |
@@ -139,7 +149,7 @@ Create body:
 ```
 apps/
   server/   Hono api (routes → controllers → services → repositories), auth & sessions, geoip, drizzle schema/migrations, crypto & cleanup libs
-  web/      React SPA (Vite), shadcn/ui components, pages (viewer, editor, my pastes, favorites, stats)
+  web/      React SPA (Vite), shadcn/ui components, pages (viewer, editor, my pastes, favorites, stats, profile, admin)
 packages/
   shared/   zod schemas + shared types (TS source, no build step)
 ```
