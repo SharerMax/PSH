@@ -16,9 +16,15 @@ services:
       TZ: ${TZ:-UTC}
       # PORT=3000 and DATABASE_PATH=/app/data/psh.db are set in the image;
       # override here if needed
+      # Optional: enable IP country statistics by pointing MMDB_PATH at a MaxMind
+      # .mmdb file (e.g. GeoLite2-Country) mounted into the container; when unset,
+      # geo stats are disabled and the UI hides country data
+      # MMDB_PATH: /mmdb/GeoLite2-Country.mmdb
     volumes:
       # SQLite database lives here; use a named volume (survives upgrades)
       - psh-data:/app/data
+      # To enable country stats, mount the .mmdb file (read-only) and set MMDB_PATH:
+      # - ./mmdb:/mmdb:ro
       # Alternatively a host directory (on Linux the dir must be writable by uid 1000):
       # - ./data:/app/data
     restart: unless-stopped
