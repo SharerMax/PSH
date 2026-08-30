@@ -23,7 +23,18 @@ COPY . .
 # vite build only: typecheck runs separately (pnpm typecheck), not inside image builds
 RUN pnpm --filter @psh/web exec vite build
 
-# ---------- stage 2: production runtime ----------
+# ---------- stage 2: install production dependencies ----------
+# also pinned to the builder's native architecture: pnpm/Node crash under QEMU
+# (SIGILL on arm64), and the installed tree is architecture-independent because
+# better-sqlite3 ships prebuilt bindings for every target (incl. linux-musl arm64)
+FROM --platform=$BUILDPLATFORM base AS server-deps
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
+COPY packages/shared/package.json packages/shared/
+COPY apps/server/package.json apps/server/
+COPY apps/web/package.json apps/web/
+RUN pnpm install --prod --frozen-lockfile --filter @psh/server...
+
+# ---------- stage 3: production runtime ----------
 # keeps the workspace layout: app.ts resolves the SPA at ../../web/dist
 # relative to the server sources, and migrations live in apps/server/drizzle
 FROM base AS runtime
@@ -34,17 +45,17 @@ ENV NODE_ENV=production \
   PORT=3000 \
   DATABASE_PATH=/app/data/psh.db
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json /app/
-COPY packages/shared/package.json /app/packages/shared/
-COPY apps/server/package.json /app/apps/server/
-COPY apps/web/package.json /app/apps/web/
-RUN pnpm install --prod --frozen-lockfile --filter @psh/server... \
-  && mkdir -p /app/data \
-  && chown node:node /app/data
+COPY --from=server-deps /app/node_modules /app/node_modules
+COPY --from=server-deps /app/apps/server/node_modules /app/apps/server/node_modules
+COPY --from=server-deps /app/packages/shared/node_modules /app/packages/shared/node_modules
 
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json /app/
 COPY packages/shared/ /app/packages/shared/
 COPY apps/server/ /app/apps/server/
 COPY --from=web-builder /app/apps/web/dist /app/apps/web/dist
+
+RUN mkdir -p /app/data \
+  && chown node:node /app/data
 
 WORKDIR /app/apps/server
 USER node

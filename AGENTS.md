@@ -163,6 +163,11 @@ and the dev script relies on the native `--watch` flag, so local dev/test config
   `src/app.ts` resolves the SPA at `../../web/dist` relative to the server sources (with
   `serveStatic` root being cwd-relative) and migrations resolve at `apps/server/drizzle`.
   Do not flatten image paths without updating those resolvers.
+- JS tooling must never run under QEMU (Node 24 crashes with SIGILL on arm64): the
+  `web-builder` and `server-deps` stages are pinned to `$BUILDPLATFORM`; the target-arch
+  runtime stage only copies their outputs (`apps/web/dist`, the three `node_modules`
+  trees — `better-sqlite3` ships prebuilt bindings for every target incl. linux-musl
+  arm64). Keep it that way when touching the Dockerfile.
 - Containers start the server as a single process: `node --import tsx src/index.ts`
   (SIGTERM reaches the shutdown handler directly). Keep `@psh/shared` in the server's
   `dependencies` — tsx loads its TS source at runtime, so a prod-only install still needs it.
