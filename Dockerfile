@@ -10,18 +10,19 @@ RUN npm install --global "pnpm@${PNPM_VERSION}" \
   && npm cache clean --force
 WORKDIR /app
 
-# ---------- stage 1: build the web client ----------
-# pinned to the builder's native architecture: the output is static files,
-# so no need to cross-compile JS tooling under QEMU for arm64
-FROM --platform=$BUILDPLATFORM base AS web-builder
+# ---------- stage 1: build the web client and the server bundle ----------
+# pinned to the builder's native architecture: no JS tooling under QEMU for arm64
+FROM --platform=$BUILDPLATFORM base AS builder
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY packages/shared/package.json packages/shared/
 COPY apps/server/package.json apps/server/
 COPY apps/web/package.json apps/web/
 RUN pnpm install --frozen-lockfile
 COPY . .
-# vite build only: typecheck runs separately (pnpm typecheck), not inside image builds
-RUN pnpm --filter @psh/web exec vite build
+# vite build + esbuild server bundle only: typecheck runs separately (pnpm
+# typecheck), not inside image builds
+RUN pnpm --filter @psh/web exec vite build \
+  && pnpm --filter @psh/server build
 
 # ---------- stage 2: install production dependencies ----------
 # also pinned to the builder's native architecture: pnpm/Node crash under QEMU
@@ -35,8 +36,9 @@ COPY apps/web/package.json apps/web/
 RUN pnpm install --prod --frozen-lockfile --filter @psh/server...
 
 # ---------- stage 3: production runtime ----------
-# keeps the workspace layout: app.ts resolves the SPA at ../../web/dist
-# relative to the server sources, and migrations live in apps/server/drizzle
+# runs the compiled server bundle (tsx is dev-only) and keeps the workspace
+# layout: dist resolves the SPA at ../../web/dist and migrations at ../../drizzle
+# relative to dist/src, matching the source layout
 FROM base AS runtime
 LABEL org.opencontainers.image.title="psh" \
   org.opencontainers.image.description="Self-hosted pastebin-style snippet sharing service"
@@ -47,12 +49,11 @@ ENV NODE_ENV=production \
 
 COPY --from=server-deps /app/node_modules /app/node_modules
 COPY --from=server-deps /app/apps/server/node_modules /app/apps/server/node_modules
-COPY --from=server-deps /app/packages/shared/node_modules /app/packages/shared/node_modules
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json /app/
-COPY packages/shared/ /app/packages/shared/
-COPY apps/server/ /app/apps/server/
-COPY --from=web-builder /app/apps/web/dist /app/apps/web/dist
+COPY apps/server/package.json /app/apps/server/
+COPY --from=builder /app/apps/server/dist /app/apps/server/dist
+COPY apps/server/drizzle/ /app/apps/server/drizzle/
+COPY --from=builder /app/apps/web/dist /app/apps/web/dist
 
 RUN mkdir -p /app/data \
   && chown node:node /app/data
@@ -65,4 +66,4 @@ VOLUME ["/app/data"]
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD wget -qO/dev/null "http://127.0.0.1:${PORT}/" || exit 1
 
-CMD ["node", "--import", "tsx", "src/index.ts"]
+CMD ["node", "dist/src/index.js"]

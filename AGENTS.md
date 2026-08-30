@@ -17,7 +17,7 @@ Guidance for AI agents working on this repository.
 ```sh
 pnpm install                 # install everything (workspace root)
 pnpm dev                     # server (:3000) + web (:5173) in parallel
-pnpm build                   # build web client into apps/web/dist
+pnpm build                   # server bundle (apps/server/dist) + web client (apps/web/dist)
 pnpm start                   # production: single process serving API + static dist
 pnpm typecheck               # tsc --noEmit across all packages
 pnpm lint                    # eslint . (flat config, antfu preset, no Prettier)
@@ -152,25 +152,35 @@ and the dev script relies on the native `--watch` flag, so local dev/test config
   carry nullable `username` for anonymous pastes) and `DELETE /pastes/id/:id`. Auth
   responses (`register`/`login`/`me`) include `role`.
 
+- **Server build**: `pnpm --filter @psh/server build` bundles `src/index.ts` into
+  `dist/src/index.js` via esbuild (`build.mjs`) — `@psh/shared` TS is inlined, every real
+  dependency stays external. `tsx` is dev-only (devDependencies): `dev` runs TS source,
+  `start`/Docker run the compiled bundle. The `dist/src` depth matches `src/` so the
+  `import.meta.dirname`-based `../../drizzle` and `../../web/dist` resolvers work in both
+  modes — keep that invariant when touching `build.mjs`.
+
 ### Shared package (packages/shared)
 
-- TS source is imported directly by both server (tsx) and web (Vite) — never add a build step.
+- TS source is imported directly by web (Vite) and by the server in dev (tsx); the
+  server build inlines it via esbuild — the package itself never gets a build step.
+- `@psh/shared` is a devDependency of the server (bundled at build time), so a
+  prod-only install doesn't need it.
 - Keep request/response zod schemas here so both sides stay in sync.
 
 ### Docker & CI
 
 - The runtime image preserves the pnpm workspace layout. Path resolution depends on it:
-  `src/app.ts` resolves the SPA at `../../web/dist` relative to the server sources (with
-  `serveStatic` root being cwd-relative) and migrations resolve at `apps/server/drizzle`.
-  Do not flatten image paths without updating those resolvers.
+  the server bundle at `apps/server/dist/src` resolves the SPA at `../../web/dist` and
+  migrations at `../../drizzle` (same depth as the TS sources, with `serveStatic` root
+  being cwd-relative). Do not flatten image paths without updating those resolvers.
 - JS tooling must never run under QEMU (Node 24 crashes with SIGILL on arm64): the
-  `web-builder` and `server-deps` stages are pinned to `$BUILDPLATFORM`; the target-arch
-  runtime stage only copies their outputs (`apps/web/dist`, the three `node_modules`
-  trees — `better-sqlite3` ships prebuilt bindings for every target incl. linux-musl
-  arm64). Keep it that way when touching the Dockerfile.
-- Containers start the server as a single process: `node --import tsx src/index.ts`
-  (SIGTERM reaches the shutdown handler directly). Keep `@psh/shared` in the server's
-  `dependencies` — tsx loads its TS source at runtime, so a prod-only install still needs it.
+  `builder` and `server-deps` stages are pinned to `$BUILDPLATFORM`; the target-arch
+  runtime stage only copies their outputs (`apps/web/dist`, `apps/server/dist`, and the
+  two `node_modules` trees — `better-sqlite3` ships prebuilt bindings for every target
+  incl. linux-musl arm64). Keep it that way when touching the Dockerfile.
+- Containers start the compiled server as a single process: `node dist/src/index.js`
+  (SIGTERM reaches the shutdown handler directly). tsx is dev-only — the image runs the
+  esbuild bundle and needs no TypeScript loader.
 - `better-sqlite3` bundles prebuilt bindings inside its tarball (incl. linux-musl and
   arm64), so the Alpine-based image needs no build toolchain. Keep
   `allowBuilds.better-sqlite3: false`.
@@ -178,10 +188,8 @@ and the dev script relies on the native `--watch` flag, so local dev/test config
   `v*` tag pushes (semver + `latest`) or manual `workflow_dispatch` (gets a `sha-*`
   tag); regular pushes and PRs do not trigger image builds. Tag builds are followed
   by a `release` job that creates the GitHub Release with auto-generated notes.
-  Web build stage is pinned to `$BUILDPLATFORM` so arm64 images don't run JS tooling
-  under QEMU.
-- Image builds run `vite build` directly — no `tsc` inside Docker; type checking happens
-  via `pnpm typecheck` (local/CI) before publishing.
+- Image builds run `vite build` + the esbuild server bundle — no `tsc` inside Docker;
+  type checking happens via `pnpm typecheck` (local/CI) before publishing.
 
 ## Verification checklist before committing
 
