@@ -1,7 +1,7 @@
 import type { NewPasteRow, PasteRow } from '../db/schema'
 import { and, count, desc, eq, gt, gte, isNotNull, isNull, like, lt, lte, or } from 'drizzle-orm'
 import { db } from '../db'
-import { pastes } from '../db/schema'
+import { pastes, users } from '../db/schema'
 
 export interface PastePageFilter {
   offset: number
@@ -84,4 +84,52 @@ export function listPastesPageByUserId(userId: string, filter: PastePageFilter):
     .all()[0]
     ?.value ?? 0
   return { rows, total }
+}
+
+function adminPastePageWhere(filter: PastePageFilter) {
+  const conditions = [
+    // live rows only: expired ones are either lazily deleted or swept later
+    or(isNull(pastes.expiresAt), gt(pastes.expiresAt, new Date())),
+  ]
+  if (filter.q) {
+    // SQLite LIKE is case-insensitive for ASCII
+    const pattern = `%${filter.q}%`
+    conditions.push(or(like(pastes.title, pattern), like(pastes.link, pattern)))
+  }
+  if (filter.language) {
+    conditions.push(eq(pastes.language, filter.language))
+  }
+  if (filter.from) {
+    conditions.push(gte(pastes.createdAt, filter.from))
+  }
+  if (filter.to) {
+    conditions.push(lte(pastes.createdAt, filter.to))
+  }
+  return and(...conditions)
+}
+
+/** Paginated live pastes of any owner with the author username. */
+export function listPastesPageForAdmin(filter: PastePageFilter): { rows: Array<{ paste: PasteRow, username: string | null }>, total: number } {
+  const where = adminPastePageWhere(filter)
+  const rows = db
+    .select({ paste: pastes, username: users.username })
+    .from(pastes)
+    .leftJoin(users, eq(pastes.userId, users.id))
+    .where(where)
+    .orderBy(desc(pastes.createdAt))
+    .limit(filter.limit)
+    .offset(filter.offset)
+    .all()
+  const total = db
+    .select({ value: count() })
+    .from(pastes)
+    .where(where)
+    .all()[0]
+    ?.value ?? 0
+  return { rows, total }
+}
+
+/** Delete every paste of a user (paste_views and favorites cascade). */
+export function deletePastesByUserId(userId: string): void {
+  db.delete(pastes).where(eq(pastes.userId, userId)).run()
 }

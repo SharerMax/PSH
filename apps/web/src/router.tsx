@@ -1,5 +1,7 @@
 import { createBrowserRouter } from 'react-router'
 import { PasteView } from '@/pages/$link'
+import { AdminPastes } from '@/pages/admin/pastes'
+import { AdminUsers } from '@/pages/admin/users'
 import { Home } from '@/pages/home'
 import { Login } from '@/pages/login'
 import { MyPastes } from '@/pages/mine'
@@ -29,6 +31,14 @@ export const router = createBrowserRouter([
   {
     path: '/profile',
     element: <Profile />,
+  },
+  {
+    path: '/admin/users',
+    element: <AdminUsers />,
+  },
+  {
+    path: '/admin/pastes',
+    element: <AdminPastes />,
   },
   {
     path: '/mine/:id',

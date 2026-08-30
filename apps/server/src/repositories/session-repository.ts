@@ -35,6 +35,11 @@ export function deleteOtherUserSessions(userId: string, keepToken: string): numb
     .changes
 }
 
+/** Revoke every session of a user (e.g. after ban or password reset). */
+export function deleteAllUserSessions(userId: string): number {
+  return db.delete(sessions).where(eq(sessions.userId, userId)).run().changes
+}
+
 export function deleteExpiredSessions(): number {
   return db
     .delete(sessions)

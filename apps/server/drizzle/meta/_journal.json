@@ -36,6 +36,13 @@
       "when": 1788078057859,
       "tag": "0004_fuzzy_mysterio",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1788084699976,
+      "tag": "0005_quick_mentallo",
+      "breakpoints": true
     }
   ]
 }

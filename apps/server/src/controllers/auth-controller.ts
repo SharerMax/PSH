@@ -13,8 +13,8 @@ import {
   registerUser,
 } from '../services/auth-service'
 
-function toUser(user: { id: string, username: string }): { id: string, username: string } {
-  return { id: user.id, username: user.username }
+function toUser(user: { id: string, username: string, role: 'admin' | 'user' }): { id: string, username: string, role: 'admin' | 'user' } {
+  return { id: user.id, username: user.username, role: user.role }
 }
 
 export function register(c: Context, input: AuthInput): Response {
@@ -29,7 +29,9 @@ export function register(c: Context, input: AuthInput): Response {
 export function login(c: Context, input: AuthInput): Response {
   const result = loginUser(input)
   if (!result.ok) {
-    return c.json({ error: 'Invalid username or password' }, 401)
+    return result.error === 'account-banned'
+      ? c.json({ error: 'Account is banned' }, 401)
+      : c.json({ error: 'Invalid username or password' }, 401)
   }
   setCookie(c, SESSION_COOKIE, createSession(result.user.id), sessionCookieOptions)
   return c.json(toUser(result.user))

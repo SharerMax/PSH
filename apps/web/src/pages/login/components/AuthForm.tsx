@@ -1,6 +1,17 @@
+import { ShieldCheckIcon } from 'lucide-react'
 import { useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -36,6 +47,8 @@ export function AuthForm() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  /** first registered user became admin: block navigation until acknowledged */
+  const [adminDialogOpen, setAdminDialogOpen] = useState(false)
 
   async function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -47,12 +60,18 @@ export function AuthForm() {
       if (mode === 'login') {
         await login(username.trim(), password)
         toast.success(t('toast.loginSuccess'))
+        navigate(from)
       }
       else {
-        await register(username.trim(), password)
+        const registered = await register(username.trim(), password)
         toast.success(t('toast.registerSuccess'))
+        if (registered.role === 'admin') {
+          setAdminDialogOpen(true)
+        }
+        else {
+          navigate(from)
+        }
       }
-      navigate(from)
     }
     catch (error) {
       toast.error(
@@ -65,55 +84,88 @@ export function AuthForm() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          {mode === 'login' ? t('login.title') : t('login.registerTitle')}
-        </CardTitle>
-        <CardDescription>
-          {mode === 'login' ? t('login.description') : t('login.registerDescription')}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="username">{t('field.username')}</Label>
-            <Input
-              id="username"
-              value={username}
-              onChange={e => setUsername(e.target.value)}
-              placeholder={t('placeholder.username')}
-              autoComplete="username"
-              maxLength={32}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="account-password">{t('field.password')}</Label>
-            <Input
-              id="account-password"
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder={t('placeholder.accountPassword')}
-              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-              maxLength={128}
-            />
-          </div>
-          <Button type="submit" disabled={submitting}>
-            {mode === 'login'
-              ? (submitting ? t('action.loggingIn') : t('action.login'))
-              : t('action.register')}
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            nativeButton={false}
-            onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-          >
-            {mode === 'login' ? t('action.switchToRegister') : t('action.switchToLogin')}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            {mode === 'login' ? t('login.title') : t('login.registerTitle')}
+          </CardTitle>
+          <CardDescription>
+            {mode === 'login' ? t('login.description') : t('login.registerDescription')}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="username">{t('field.username')}</Label>
+              <Input
+                id="username"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                placeholder={t('placeholder.username')}
+                autoComplete="username"
+                maxLength={32}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="account-password">{t('field.password')}</Label>
+              <Input
+                id="account-password"
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder={t('placeholder.accountPassword')}
+                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                maxLength={128}
+              />
+            </div>
+            <Button type="submit" disabled={submitting}>
+              {mode === 'login'
+                ? (submitting ? t('action.loggingIn') : t('action.login'))
+                : t('action.register')}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              nativeButton={false}
+              onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
+            >
+              {mode === 'login' ? t('action.switchToRegister') : t('action.switchToLogin')}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+      <AlertDialog
+        open={adminDialogOpen}
+        onOpenChange={(open) => {
+          setAdminDialogOpen(open)
+          if (!open) {
+            navigate(from)
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogMedia>
+              <ShieldCheckIcon className="text-primary" />
+            </AlertDialogMedia>
+            <AlertDialogTitle>{t('register.adminTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('register.adminDescription')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              onClick={() => {
+                setAdminDialogOpen(false)
+                navigate(from)
+              }}
+            >
+              {t('register.adminAcknowledge')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }

@@ -134,9 +134,13 @@ export const authInputSchema = z.object({
 })
 export type AuthInput = z.infer<typeof authInputSchema>
 
+export const USER_ROLES = ['admin', 'user'] as const
+export type UserRole = (typeof USER_ROLES)[number]
+
 export const userSchema = z.object({
   id: z.string(),
   username: z.string(),
+  role: z.enum(USER_ROLES),
 })
 export type User = z.infer<typeof userSchema>
 
@@ -238,3 +242,49 @@ export const pasteViewsPageSchema = z.object({
   })),
 })
 export type PasteViewsPage = z.infer<typeof pasteViewsPageSchema>
+
+/** Admin: paginated user list with a username search. */
+export const adminUserListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+  q: z.string().trim().max(200).optional(),
+})
+export type AdminUserListQuery = z.infer<typeof adminUserListQuerySchema>
+
+export const adminUserItemSchema = z.object({
+  id: z.string(),
+  username: z.string(),
+  role: z.enum(USER_ROLES),
+  banned: z.boolean(),
+  createdAt: z.string(),
+  pasteCount: z.number().int().nonnegative(),
+})
+export type AdminUserItem = z.infer<typeof adminUserItemSchema>
+
+export const adminUserListPageSchema = z.object({
+  ...pageMeta,
+  rows: z.array(adminUserItemSchema),
+})
+export type AdminUserListPage = z.infer<typeof adminUserListPageSchema>
+
+export const adminUserUpdateInputSchema = z.object({
+  banned: z.boolean().optional(),
+  password: z
+    .string()
+    .min(USER_PASSWORD_MIN, `password must be at least ${USER_PASSWORD_MIN} characters`)
+    .max(128)
+    .optional(),
+})
+export type AdminUserUpdateInput = z.infer<typeof adminUserUpdateInputSchema>
+
+/** Admin: all live pastes with the author username (null for anonymous pastes). */
+export const adminPasteItemSchema = myPasteItemSchema.extend({
+  username: z.string().nullable(),
+})
+export type AdminPasteItem = z.infer<typeof adminPasteItemSchema>
+
+export const adminPasteListPageSchema = z.object({
+  ...pageMeta,
+  rows: z.array(adminPasteItemSchema),
+})
+export type AdminPasteListPage = z.infer<typeof adminPasteListPageSchema>

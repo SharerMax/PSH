@@ -1,4 +1,4 @@
-import type { UserRow } from '../db/schema'
+import type { UserRole, UserRow } from '../db/schema'
 import { SESSION_TTL_MS } from '../lib/auth'
 import { hashPassword, verifyPassword } from '../lib/crypto'
 import { newSessionToken, newUserId } from '../lib/id'
@@ -9,6 +9,7 @@ import {
   insertSession,
 } from '../repositories/session-repository'
 import {
+  existsAnyUser,
   findUserById,
   findUserByUsername,
   insertUser,
@@ -18,19 +19,22 @@ import {
 export interface AuthUser {
   id: string
   username: string
+  role: UserRole
 }
 
 export type AuthResult
   = | { ok: true, user: AuthUser }
-    | { ok: false, error: 'username-taken' | 'invalid-credentials' }
+    | { ok: false, error: 'username-taken' | 'invalid-credentials' | 'account-banned' }
 
 export function registerUser(input: { username: string, password: string }): AuthResult {
   if (findUserByUsername(input.username)) {
     return { ok: false, error: 'username-taken' }
   }
   const id = newUserId()
-  insertUser({ id, username: input.username, passwordHash: hashPassword(input.password) })
-  return { ok: true, user: { id, username: input.username } }
+  // the first registered user becomes the administrator
+  const role: UserRole = existsAnyUser() ? 'user' : 'admin'
+  insertUser({ id, username: input.username, passwordHash: hashPassword(input.password), role })
+  return { ok: true, user: { id, username: input.username, role } }
 }
 
 export function loginUser(input: { username: string, password: string }): AuthResult {
@@ -38,7 +42,10 @@ export function loginUser(input: { username: string, password: string }): AuthRe
   if (!user || !verifyPassword(input.password, user.passwordHash)) {
     return { ok: false, error: 'invalid-credentials' }
   }
-  return { ok: true, user: { id: user.id, username: user.username } }
+  if (user.banned) {
+    return { ok: false, error: 'account-banned' }
+  }
+  return { ok: true, user: { id: user.id, username: user.username, role: user.role } }
 }
 
 export function createSession(userId: string): string {

@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { join, relative, resolve, sep } from 'node:path'
 import { serveStatic } from '@hono/node-server/serve-static'
 import { Hono } from 'hono'
+import { adminRoutes } from './routes/admin'
 import { authRoutes, authUserRoutes } from './routes/auth'
 import { mineRoutes } from './routes/mine'
 import { apiRoutes, rawRoutes } from './routes/pastes'
@@ -17,6 +18,7 @@ export function createApp(): Hono {
   app.route('/api/auth', authRoutes)
   app.route('/api/auth', authUserRoutes)
   app.route('/api/mine', mineRoutes)
+  app.route('/api/admin', adminRoutes)
   app.route('/raw', rawRoutes)
 
   // single-process deployment: host the built web client when present

@@ -1,9 +1,14 @@
 import { index, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
+export const USER_ROLES = ['admin', 'user'] as const
+export type UserRole = (typeof USER_ROLES)[number]
+
 export const users = sqliteTable('users', {
   id: text('id').primaryKey(),
   username: text('username').notNull().unique(),
   passwordHash: text('password_hash').notNull(),
+  role: text('role', { enum: USER_ROLES }).notNull().default('user'),
+  banned: integer('banned', { mode: 'boolean' }).notNull().default(false),
   createdAt: integer('created_at', { mode: 'timestamp_ms' })
     .notNull()
     .$defaultFn(() => new Date()),

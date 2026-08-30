@@ -1,4 +1,4 @@
-import { ClipboardListIcon, LogInIcon, LogOutIcon, StarIcon, UserRoundIcon } from 'lucide-react'
+import { ClipboardListIcon, LogInIcon, LogOutIcon, Settings2Icon, StarIcon, UserRoundIcon } from 'lucide-react'
 import { Link, useLocation } from 'react-router'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -9,6 +9,7 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/lib/auth'
@@ -76,6 +77,20 @@ export function AccountMenu() {
             <UserRoundIcon data-icon="inline-start" />
             {t('nav.profile')}
           </DropdownMenuItem>
+          {user.role === 'admin' && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem render={<Link to="/admin/users" />}>
+                <Settings2Icon data-icon="inline-start" />
+                {t('nav.adminUsers')}
+              </DropdownMenuItem>
+              <DropdownMenuItem render={<Link to="/admin/pastes" />}>
+                <ClipboardListIcon data-icon="inline-start" />
+                {t('nav.adminPastes')}
+              </DropdownMenuItem>
+            </>
+          )}
+          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>
             <LogOutIcon data-icon="inline-start" />
             {t('nav.logout')}

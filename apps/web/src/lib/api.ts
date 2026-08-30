@@ -1,5 +1,7 @@
-import type { AuthInput, ChangePasswordInput, FavoriteListPage, FavoriteStatus, MineListQuery, MyPasteListPage, PasteContent, PasteCreatedResponse, PasteCreateInput, PasteMeta, PasteStats, PasteUpdateInput, PasteViewsPage, PasteViewsQuery, User } from '@psh/shared'
+import type { AdminPasteListPage, AdminUserListPage, AdminUserListQuery, AdminUserUpdateInput, AuthInput, ChangePasswordInput, FavoriteListPage, FavoriteStatus, MineListQuery, MyPasteListPage, PasteContent, PasteCreatedResponse, PasteCreateInput, PasteMeta, PasteStats, PasteUpdateInput, PasteViewsPage, PasteViewsQuery, User } from '@psh/shared'
 import {
+  adminPasteListPageSchema,
+  adminUserListPageSchema,
   favoriteListPageSchema,
   favoriteStatusSchema,
   myPasteListPageSchema,
@@ -192,4 +194,40 @@ export function unfavoritePaste(link: string): Promise<FavoriteStatus> {
 export function getMyFavorites(query: Partial<MineListQuery>): Promise<FavoriteListPage> {
   const qs = buildMineQuery(query)
   return request(`/api/mine/favorites${qs ? `?${qs}` : ''}`, favoriteListPageSchema)
+}
+
+export function getAdminUsers(query: Partial<AdminUserListQuery>): Promise<AdminUserListPage> {
+  const params = new URLSearchParams()
+  if (query.page) {
+    params.set('page', String(query.page))
+  }
+  if (query.pageSize) {
+    params.set('pageSize', String(query.pageSize))
+  }
+  if (query.q) {
+    params.set('q', query.q)
+  }
+  const qs = params.toString()
+  return request(`/api/admin/users${qs ? `?${qs}` : ''}`, adminUserListPageSchema)
+}
+
+export function updateAdminUser(id: string, input: AdminUserUpdateInput): Promise<{ ok: boolean }> {
+  return request(`/api/admin/users/${id}`, z.object({ ok: z.boolean() }), {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+}
+
+export function deleteAdminUser(id: string): Promise<{ ok: boolean }> {
+  return request(`/api/admin/users/${id}`, z.object({ ok: z.boolean() }), { method: 'DELETE' })
+}
+
+export function getAdminPastes(query: Partial<MineListQuery>): Promise<AdminPasteListPage> {
+  const qs = buildMineQuery(query)
+  return request(`/api/admin/pastes${qs ? `?${qs}` : ''}`, adminPasteListPageSchema)
+}
+
+export function deleteAdminPaste(id: number): Promise<{ ok: boolean }> {
+  return request(`/api/admin/pastes/id/${id}`, z.object({ ok: z.boolean() }), { method: 'DELETE' })
 }
