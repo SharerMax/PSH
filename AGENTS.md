@@ -68,12 +68,13 @@ variables:
   CC BY 4.0 — keep the attribution line).
 - Path alias `@/*` → `apps/web/src/*`.
 - **Pages are organized by route path**: `pages/home/`, `pages/login/`, `pages/mine/`,
-  `pages/mine/$id/`, `pages/mine/$id/stats/`, `pages/mine/favorites/`, `pages/$link/`
+  `pages/mine/$id/`, `pages/mine/$id/stats/`, `pages/mine/favorites/`, `pages/profile/`,
+  `pages/admin/users/`, `pages/admin/pastes/`, `pages/$link/`
   (dynamic segments use `$param`), `pages/not-found/`. Each page dir has an `index.tsx`
   entry plus page-scoped components in `components/`; shared across pages:
   `PasteDeleteDialog`, `PasteUnlockDialog` in `src/components/`; `pages/mine/components/`
-  holds `ListFilters`/`ListPagination`/`useMineListFilters` reused by the "my pastes"
-  and "my favorites" lists.
+  holds `ListFilters`/`ListPagination`/`useMineListFilters` reused by the "my pastes",
+  "my favorites" and admin paste lists.
 - **Login redirect flow**: every place that sends an anonymous user to `/login` passes the
   originating path via router state (`state: { from: pathname + search }`) — header
   `AccountMenu`, unauthenticated guards on owner pages, and the favorite button's
@@ -85,6 +86,9 @@ variables:
   `label` prop is only for keyboard text navigation and does not affect the trigger.
 - Form submit handlers use `React.SubmitEvent<HTMLFormElement>` (types ≥19.2); the
   `FormEvent` type is deprecated and must not be reintroduced.
+- **Admin UI**: the account menu shows `/admin/users` + `/admin/pastes` entries only when
+  `user.role === 'admin'`; non-admins visiting `/admin/*` get the 404 page. Registering
+  as the first user pops an `AlertDialog` (shadcn `alert-dialog`) announcing admin rights.
 
 ### Backend (apps/server)
 
@@ -134,6 +138,19 @@ variables:
   country) referencing the integer paste id. GeoIP lookup is in `lib/geoip.ts` —
   synchronous `mmdb-lib` reader initialized from `MMDB_PATH`; never make it async or move
   it to request time.
+- **Profile & password change**: `POST /api/auth/password` (owner session, schemas in
+  `@psh/shared`) verifies the current password, rotates the scrypt hash and revokes all
+  other sessions of the caller.
+- **Admin & roles**: the first registered user gets `users.role = 'admin'` (migration
+  backfills the earliest user on existing DBs); `users.banned` blocks login, and banning
+  or resetting a password revokes all of that user's sessions. `requireAdmin()`
+  (`middleware/auth.ts`) answers 401 to anonymous callers and 404 to non-admins. Admin
+  endpoints under `/api/admin`: `GET /users` (paginated, `q` search, rows carry
+  `pasteCount`), `PATCH /users/:id` (`{banned?, password?}`; self-ban forbidden),
+  `DELETE /users/:id` (deletes the user's pastes in a transaction — views/favorites
+  cascade; self-delete forbidden), `GET /pastes` (reuses `mineListQuerySchema`, rows
+  carry nullable `username` for anonymous pastes) and `DELETE /pastes/id/:id`. Auth
+  responses (`register`/`login`/`me`) include `role`.
 
 ### Shared package (packages/shared)
 
@@ -167,7 +184,9 @@ variables:
    (`POST /api/pastes`, `/api/pastes/link/:link/meta`, `/api/pastes/id/:id/content?password=`,
    `/raw/link/:link`); for auth/owner features also cover register → login (cookie) →
    create → `/api/mine` → stats/views → edit (by id or link) → favorites
-   (`/api/pastes/link/:link/favorite`, `/api/mine/favorites`)
+   (`/api/pastes/link/:link/favorite`, `/api/mine/favorites`); for admin features also
+   cover first-user admin role, `/api/admin/users` (list/ban/reset/delete) and
+   `/api/admin/pastes` (list/delete) with 401/404 checks
 4. If web behavior changed: verify visually against the dev server on `:5173`
 
 ## External references
@@ -187,3 +206,7 @@ Base UI (`@base-ui/react`), whose conventions differ from Radix (`render=` inste
 - Conventional Commits, English imperative subject ≤ 72 chars.
 - Non-trivial changes need a body: blank line then `-` bullet list.
 - Commit scope follows subprojects (`feat(web):`, `feat(server):`, `chore:` …).
+- **Split commits strictly by package, in dependency order**: `packages/shared` first
+  (schema/type changes both sides depend on), then `apps/server`, then `apps/web`.
+  Never mix files from different packages in one commit; cross-package changes land as
+  a sequence of commits in that order (e.g. `feat(shared):` → `feat(server):` → `feat(web):`).
