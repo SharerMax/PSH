@@ -60,6 +60,9 @@ catalogs:
     drizzle-orm:
       specifier: ^0.45.2
       version: 0.45.2
+    esbuild:
+      specifier: ^0.28.2
+      version: 0.28.2
     eslint:
       specifier: ^10.9.0
       version: 10.9.0
@@ -146,9 +149,6 @@ importers:
       '@hono/zod-validator':
         specifier: 'catalog:'
         version: 0.9.0(hono@4.13.3)(zod@4.4.3)
-      '@psh/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       better-sqlite3:
         specifier: 'catalog:'
         version: 13.0.3
@@ -164,13 +164,13 @@ importers:
       nanoid:
         specifier: 'catalog:'
         version: 6.0.1
-      tsx:
-        specifier: 'catalog:'
-        version: 4.23.12
       zod:
         specifier: 'catalog:'
         version: 4.4.3
     devDependencies:
+      '@psh/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@types/better-sqlite3':
         specifier: 'catalog:'
         version: 9.6.0
@@ -180,6 +180,12 @@ importers:
       drizzle-kit:
         specifier: 'catalog:'
         version: 0.31.10
+      esbuild:
+        specifier: 'catalog:'
+        version: 0.28.2
+      tsx:
+        specifier: 'catalog:'
+        version: 4.23.12
       typescript:
         specifier: 'catalog:'
         version: 6.0.3

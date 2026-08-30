@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "dev": "node --env-file-if-exists=.env --watch --import tsx src/index.ts",
-    "start": "node --env-file-if-exists=.env --import tsx src/index.ts",
+    "build": "node build.mjs",
+    "start": "node --env-file-if-exists=.env dist/src/index.js",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio"
@@ -13,19 +14,20 @@
   "dependencies": {
     "@hono/node-server": "catalog:",
     "@hono/zod-validator": "catalog:",
-    "@psh/shared": "workspace:*",
     "better-sqlite3": "catalog:",
     "drizzle-orm": "catalog:",
     "hono": "catalog:",
     "mmdb-lib": "catalog:",
     "nanoid": "catalog:",
-    "tsx": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@psh/shared": "workspace:*",
     "@types/better-sqlite3": "catalog:",
     "@types/node": "catalog:",
     "drizzle-kit": "catalog:",
+    "esbuild": "catalog:",
+    "tsx": "catalog:",
     "typescript": "catalog:"
   }
 }

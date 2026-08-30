@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "pnpm --parallel --filter @psh/server --filter @psh/web dev",
-    "build": "pnpm --filter @psh/web build",
+    "build": "pnpm --filter @psh/server build && pnpm --filter @psh/web build",
     "start": "pnpm --filter @psh/server start",
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",
