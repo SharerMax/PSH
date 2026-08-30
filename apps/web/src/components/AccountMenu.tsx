@@ -1,4 +1,4 @@
-import { ClipboardListIcon, LogInIcon, LogOutIcon, StarIcon } from 'lucide-react'
+import { ClipboardListIcon, LogInIcon, LogOutIcon, StarIcon, UserRoundIcon } from 'lucide-react'
 import { Link, useLocation } from 'react-router'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -71,6 +71,10 @@ export function AccountMenu() {
           <DropdownMenuItem render={<Link to="/mine/favorites" />}>
             <StarIcon data-icon="inline-start" />
             {t('nav.myFavorites')}
+          </DropdownMenuItem>
+          <DropdownMenuItem render={<Link to="/profile" />}>
+            <UserRoundIcon data-icon="inline-start" />
+            {t('nav.profile')}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleLogout}>
             <LogOutIcon data-icon="inline-start" />

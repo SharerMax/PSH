@@ -7,6 +7,7 @@ import { PasteManage } from '@/pages/mine/$id'
 import { PasteStatsPage } from '@/pages/mine/$id/stats'
 import { MyFavorites } from '@/pages/mine/favorites'
 import { NotFound } from '@/pages/not-found'
+import { Profile } from '@/pages/profile'
 
 export const router = createBrowserRouter([
   {
@@ -24,6 +25,10 @@ export const router = createBrowserRouter([
   {
     path: '/mine/favorites',
     element: <MyFavorites />,
+  },
+  {
+    path: '/profile',
+    element: <Profile />,
   },
   {
     path: '/mine/:id',

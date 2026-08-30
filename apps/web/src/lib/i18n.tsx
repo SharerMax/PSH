@@ -161,6 +161,17 @@ const en = {
   'error.deleteFailed': 'Failed to delete paste',
   'toast.pasteUpdated': 'Paste updated',
   'error.updateFailed': 'Failed to update paste',
+  'nav.profile': 'Profile',
+  'profile.title': 'Profile',
+  'profile.description': 'Manage your account and password.',
+  'profile.changePassword': 'Change password',
+  'profile.changePasswordDescription': 'Changing the password signs out all other sessions.',
+  'profile.currentPassword': 'Current password',
+  'profile.newPassword': 'New password',
+  'profile.confirmPassword': 'Confirm new password',
+  'toast.passwordChanged': 'Password changed',
+  'error.passwordMismatch': 'New passwords do not match',
+  'error.changePasswordFailed': 'Failed to change password',
 } as const
 
 const zh: Record<TranslationKey, string> = {
@@ -318,6 +329,17 @@ const zh: Record<TranslationKey, string> = {
   'error.deleteFailed': '删除失败',
   'toast.pasteUpdated': '更新成功',
   'error.updateFailed': '更新失败',
+  'nav.profile': '个人资料',
+  'profile.title': '个人资料',
+  'profile.description': '管理你的账号与密码。',
+  'profile.changePassword': '修改密码',
+  'profile.changePasswordDescription': '修改密码后将退出其他设备的登录。',
+  'profile.currentPassword': '当前密码',
+  'profile.newPassword': '新密码',
+  'profile.confirmPassword': '确认新密码',
+  'toast.passwordChanged': '密码修改成功',
+  'error.passwordMismatch': '两次输入的新密码不一致',
+  'error.changePasswordFailed': '修改密码失败',
 }
 
 const dictionaries: Record<Locale, Record<TranslationKey, string>> = { en, zh }

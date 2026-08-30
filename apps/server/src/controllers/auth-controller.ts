@@ -1,8 +1,11 @@
-import type { AuthInput } from '@psh/shared'
+import type { AuthInput, ChangePasswordInput } from '@psh/shared'
 import type { Context } from 'hono'
+import type { UserEnv } from '../middleware/auth'
 import { setCookie } from 'hono/cookie'
 import { getSessionToken, SESSION_COOKIE, sessionCookieOptions } from '../lib/auth'
+import { getUser } from '../middleware/auth'
 import {
+  changePassword,
   createSession,
   destroySession,
   getSessionUser,
@@ -43,4 +46,12 @@ export function me(c: Context): Response {
     return c.json({ error: 'Not authenticated' }, 401)
   }
   return c.json(toUser(user))
+}
+
+export function changeUserPassword(c: Context<UserEnv>, input: ChangePasswordInput): Response {
+  const result = changePassword(getUser(c).id, getSessionToken(c) ?? '', input)
+  if (!result.ok) {
+    return c.json({ error: 'Current password is incorrect' }, 403)
+  }
+  return c.json({ ok: true })
 }

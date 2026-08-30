@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { join, relative, resolve, sep } from 'node:path'
 import { serveStatic } from '@hono/node-server/serve-static'
 import { Hono } from 'hono'
-import { authRoutes } from './routes/auth'
+import { authRoutes, authUserRoutes } from './routes/auth'
 import { mineRoutes } from './routes/mine'
 import { apiRoutes, rawRoutes } from './routes/pastes'
 
@@ -15,6 +15,7 @@ export function createApp(): Hono {
 
   app.route('/api/pastes', apiRoutes)
   app.route('/api/auth', authRoutes)
+  app.route('/api/auth', authUserRoutes)
   app.route('/api/mine', mineRoutes)
   app.route('/raw', rawRoutes)
 

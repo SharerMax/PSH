@@ -1,5 +1,5 @@
 import type { UserRow } from '../db/schema'
-import { and, eq, gt, lt } from 'drizzle-orm'
+import { and, eq, gt, lt, ne } from 'drizzle-orm'
 import { db } from '../db'
 import { sessions, users } from '../db/schema'
 
@@ -24,6 +24,15 @@ export function findUserByToken(token: string): UserRow | null {
 
 export function deleteSessionByToken(token: string): void {
   db.delete(sessions).where(eq(sessions.token, token)).run()
+}
+
+/** Revoke every session of a user except the given (current) token. */
+export function deleteOtherUserSessions(userId: string, keepToken: string): number {
+  return db
+    .delete(sessions)
+    .where(and(eq(sessions.userId, userId), ne(sessions.token, keepToken)))
+    .run()
+    .changes
 }
 
 export function deleteExpiredSessions(): number {

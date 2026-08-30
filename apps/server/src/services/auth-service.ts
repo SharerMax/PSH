@@ -3,11 +3,17 @@ import { SESSION_TTL_MS } from '../lib/auth'
 import { hashPassword, verifyPassword } from '../lib/crypto'
 import { newSessionToken, newUserId } from '../lib/id'
 import {
+  deleteOtherUserSessions,
   deleteSessionByToken,
   findUserByToken,
   insertSession,
 } from '../repositories/session-repository'
-import { findUserByUsername, insertUser } from '../repositories/user-repository'
+import {
+  findUserById,
+  findUserByUsername,
+  insertUser,
+  updateUserPassword,
+} from '../repositories/user-repository'
 
 export interface AuthUser {
   id: string
@@ -53,4 +59,23 @@ export function destroySession(token: string | undefined): void {
   if (token) {
     deleteSessionByToken(token)
   }
+}
+
+export type ChangePasswordResult
+  = | { ok: true }
+    | { ok: false, error: 'wrong-current-password' }
+
+/** Verify the current password, then rotate the hash and revoke other sessions. */
+export function changePassword(
+  userId: string,
+  currentToken: string,
+  input: { currentPassword: string, newPassword: string },
+): ChangePasswordResult {
+  const user = findUserById(userId)
+  if (!user || !verifyPassword(input.currentPassword, user.passwordHash)) {
+    return { ok: false, error: 'wrong-current-password' }
+  }
+  updateUserPassword(userId, hashPassword(input.newPassword))
+  deleteOtherUserSessions(userId, currentToken)
+  return { ok: true }
 }

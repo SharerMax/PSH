@@ -140,6 +140,15 @@ export const userSchema = z.object({
 })
 export type User = z.infer<typeof userSchema>
 
+export const changePasswordInputSchema = z.object({
+  currentPassword: z.string().min(1).max(128),
+  newPassword: z
+    .string()
+    .min(USER_PASSWORD_MIN, `password must be at least ${USER_PASSWORD_MIN} characters`)
+    .max(128),
+})
+export type ChangePasswordInput = z.infer<typeof changePasswordInputSchema>
+
 export const myPasteItemSchema = z.object({
   id: z.number().int().nonnegative(),
   link: z.string(),

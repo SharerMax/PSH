@@ -1,4 +1,4 @@
-import type { AuthInput, FavoriteListPage, FavoriteStatus, MineListQuery, MyPasteListPage, PasteContent, PasteCreatedResponse, PasteCreateInput, PasteMeta, PasteStats, PasteUpdateInput, PasteViewsPage, PasteViewsQuery, User } from '@psh/shared'
+import type { AuthInput, ChangePasswordInput, FavoriteListPage, FavoriteStatus, MineListQuery, MyPasteListPage, PasteContent, PasteCreatedResponse, PasteCreateInput, PasteMeta, PasteStats, PasteUpdateInput, PasteViewsPage, PasteViewsQuery, User } from '@psh/shared'
 import {
   favoriteListPageSchema,
   favoriteStatusSchema,
@@ -91,6 +91,14 @@ export function logout(): Promise<{ ok: boolean }> {
 
 export function getMe(): Promise<User> {
   return request('/api/auth/me', userSchema)
+}
+
+export function changePassword(input: ChangePasswordInput): Promise<{ ok: boolean }> {
+  return request('/api/auth/password', z.object({ ok: z.boolean() }), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
 }
 
 function buildMineQuery(query: Partial<MineListQuery>): string {
