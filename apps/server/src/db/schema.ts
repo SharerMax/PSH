@@ -1,4 +1,4 @@
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { index, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
 export const users = sqliteTable('users', {
   id: text('id').primaryKey(),
@@ -80,3 +80,25 @@ export const pasteViews = sqliteTable(
 
 export type PasteViewRow = typeof pasteViews.$inferSelect
 export type NewPasteViewRow = typeof pasteViews.$inferInsert
+
+export const favorites = sqliteTable(
+  'favorites',
+  {
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    pasteId: integer('paste_id')
+      .notNull()
+      .references(() => pastes.id, { onDelete: 'cascade' }),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  table => [
+    primaryKey({ columns: [table.userId, table.pasteId] }),
+    index('favorites_paste_id_idx').on(table.pasteId),
+  ],
+)
+
+export type FavoriteRow = typeof favorites.$inferSelect
+export type NewFavoriteRow = typeof favorites.$inferInsert

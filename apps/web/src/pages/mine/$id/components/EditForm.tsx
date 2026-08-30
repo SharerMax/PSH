@@ -26,7 +26,7 @@ interface EditFormProps {
   onChange: (patch: Partial<EditFormValue>) => void
   hasPassword: boolean
   saving: boolean
-  onSubmit: (event: React.FormEvent<HTMLFormElement>) => void
+  onSubmit: (event: React.SubmitEvent<HTMLFormElement>) => void
 }
 
 export function EditForm({ value, onChange, hasPassword, saving, onSubmit }: EditFormProps) {

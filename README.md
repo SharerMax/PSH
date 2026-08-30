@@ -22,9 +22,13 @@ A self-hosted Pastebin-style snippet sharing service. Monorepo managed with pnpm
 - Burn-after-read pastes are deleted immediately after one successful read
 - Lazy expiry on read plus a background sweep every 10 minutes
 - Owners can edit paste content within its lifetime while keeping the link unchanged
-- "My pastes" list with view counts, and per-paste statistics: total views, last access
-  (time, IP, country/region), a world map distribution and a paginated access-records
-  table with country / IP / date-range filters
+- Favorites: logged-in users can favorite pastes from the viewer (anonymous users are
+  prompted to log in and are returned to the page afterwards); a "My favorites" page lists
+  them with the same filters as "My pastes"
+- "My pastes" list with view counts, pagination (10/20/50/100 per page, default 20) and
+  filters (title/link keyword, language, creation date range); per-paste statistics:
+  total views, last access (time, IP, country/region), a world map distribution and a
+  paginated access-records table with country / IP / date-range filters
 - Raw endpoint serving `text/plain`, single-process production deploy (server hosts the built web client)
 - Viewer with shiki syntax highlighting, password dialog, copy/raw/download actions and expiry countdown
 
@@ -104,11 +108,15 @@ resolves by link, `/id/:id` by integer id.
 | PATCH  | `/api/pastes/link/:link`              | Owner: edit by link (title/language/content)       |
 | PATCH  | `/api/pastes/id/:id`                  | Owner: edit by integer id                          |
 | DELETE | `/api/pastes/id/:id`                  | Owner: delete paste by integer id                  |
+| GET    | `/api/pastes/link/:link/favorite`     | Owner: favorite status → `{ favorited }` (`401` when anonymous) |
+| POST   | `/api/pastes/link/:link/favorite`     | Owner: add favorite (idempotent)                   |
+| DELETE | `/api/pastes/link/:link/favorite`     | Owner: remove favorite (idempotent)                |
 | POST   | `/api/auth/register`                  | Create account (username + password)               |
 | POST   | `/api/auth/login`                     | Log in → sets session cookie                       |
 | POST   | `/api/auth/logout`                    | Destroy current session                            |
 | GET    | `/api/auth/me`                        | Current user (`401` when anonymous)                |
-| GET    | `/api/mine`                           | Owner: list own pastes (`{ id, link, … }` items with view counts) |
+| GET    | `/api/mine`                           | Owner: list own pastes (`{ id, link, … }` items with view counts); paginated + filtered (`page`, `pageSize` (default 20, max 100), `q`, `language`, `from`, `to`) |
+| GET    | `/api/mine/favorites`                 | Owner: list favorited pastes; same pagination/filter params |
 | GET    | `/api/mine/:id/stats`                 | Owner: aggregate stats by integer id (views, last access, by country) |
 | GET    | `/api/mine/:id/views`                 | Owner: paginated access records (`page`, `pageSize`, `country`, `ip`, `from`, `to`) |
 
@@ -131,7 +139,7 @@ Create body:
 ```
 apps/
   server/   Hono api (routes → controllers → services → repositories), auth & sessions, geoip, drizzle schema/migrations, crypto & cleanup libs
-  web/      React SPA (Vite), shadcn/ui components, pages (viewer, editor, my pastes, stats)
+  web/      React SPA (Vite), shadcn/ui components, pages (viewer, editor, my pastes, favorites, stats)
 packages/
   shared/   zod schemas + shared types (TS source, no build step)
 ```

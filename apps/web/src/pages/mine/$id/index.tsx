@@ -2,7 +2,7 @@ import type { PasteLanguage, PasteStats } from '@psh/shared'
 import type { EditFormValue } from './components/EditForm'
 import { Trash2Icon } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/PageHeader'
 import { PasteDeleteDialog } from '@/components/PasteDeleteDialog'
@@ -27,6 +27,7 @@ const MAX_CONTENT_BYTES = 1024 * 1024
 export function PasteManage() {
   const { id = '' } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const { t } = useI18n()
   const { user, loading: authLoading } = useAuth()
 
@@ -57,9 +58,9 @@ export function PasteManage() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate('/login', { replace: true })
+      navigate('/login', { replace: true, state: { from: `${location.pathname}${location.search}` } })
     }
-  }, [authLoading, user, navigate])
+  }, [authLoading, user, navigate, location])
 
   const loadContent = useCallback(async (pasteId: number, password?: string) => {
     try {
@@ -143,7 +144,7 @@ export function PasteManage() {
       setPasswordError(false)
   }
 
-  async function handleSave(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSave(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     if (form.content === null || saving)
       return

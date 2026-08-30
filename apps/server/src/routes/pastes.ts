@@ -6,6 +6,7 @@ import {
   pasteUpdateInputSchema,
 } from '@psh/shared'
 import { Hono } from 'hono'
+import * as favorite from '../controllers/favorite-controller'
 import * as paste from '../controllers/paste-controller'
 
 export const apiRoutes = new Hono()
@@ -51,6 +52,27 @@ export const apiRoutes = new Hono()
     zValidator('param', pasteIdParamsSchema),
     (c) => {
       return paste.metaById(c, c.req.valid('param').id)
+    },
+  )
+  .get(
+    '/link/:link/favorite',
+    zValidator('param', pasteLinkParamsSchema),
+    (c) => {
+      return favorite.status(c, c.req.valid('param').link)
+    },
+  )
+  .post(
+    '/link/:link/favorite',
+    zValidator('param', pasteLinkParamsSchema),
+    (c) => {
+      return favorite.add(c, c.req.valid('param').link)
+    },
+  )
+  .delete(
+    '/link/:link/favorite',
+    zValidator('param', pasteLinkParamsSchema),
+    (c) => {
+      return favorite.remove(c, c.req.valid('param').link)
     },
   )
   .get(

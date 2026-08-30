@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
@@ -17,15 +17,27 @@ import { useI18n } from '@/lib/i18n'
 
 export function AuthForm() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
   const { t } = useI18n()
   const { login, register } = useAuth()
+
+  // destination after a successful login/register: the page that initiated the
+  // navigation (router state) beats the ?redirect= param; defaults to /mine
+  const stateFrom = (location.state as { from?: unknown } | null)?.from
+  const paramFrom = searchParams.get('redirect')
+  const from = typeof stateFrom === 'string' && stateFrom.startsWith('/') && !stateFrom.startsWith('//')
+    ? stateFrom
+    : paramFrom && paramFrom.startsWith('/') && !paramFrom.startsWith('//')
+      ? paramFrom
+      : '/mine'
 
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!username.trim() || !password || submitting)
       return
@@ -40,7 +52,7 @@ export function AuthForm() {
         await register(username.trim(), password)
         toast.success(t('toast.registerSuccess'))
       }
-      navigate('/mine')
+      navigate(from)
     }
     catch (error) {
       toast.error(

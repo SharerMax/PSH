@@ -87,6 +87,27 @@ export const pasteCreatedResponseSchema = z.object({
 })
 export type PasteCreatedResponse = z.infer<typeof pasteCreatedResponseSchema>
 
+export const favoriteStatusSchema = z.object({
+  favorited: z.boolean(),
+})
+export type FavoriteStatus = z.infer<typeof favoriteStatusSchema>
+
+export const favoriteItemSchema = z.object({
+  id: z.number().int().nonnegative(),
+  link: z.string(),
+  title: z.string().nullable(),
+  language: z.string(),
+  hasPassword: z.boolean(),
+  burnAfterRead: z.boolean(),
+  createdAt: z.string(),
+  expiresAt: z.string().nullable(),
+  favoritedAt: z.string(),
+})
+export type FavoriteItem = z.infer<typeof favoriteItemSchema>
+
+export const favoriteListSchema = z.array(favoriteItemSchema)
+export type FavoriteList = z.infer<typeof favoriteListSchema>
+
 export const pasteUpdateInputSchema = z.object({
   title: z.string().trim().max(200).optional(),
   language: z.string().trim().max(64).optional(),
@@ -155,6 +176,37 @@ export const pasteStatsSchema = z.object({
 export type PasteStats = z.infer<typeof pasteStatsSchema>
 
 const isoDatetime = z.string().refine(value => !Number.isNaN(Date.parse(value)), 'invalid datetime')
+
+/** Shared page query for /api/mine and /api/mine/favorites. */
+export const mineListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+  /** Substring match against paste title or link. */
+  q: z.string().trim().max(200).optional(),
+  language: z.string().trim().min(1).max(64).optional(),
+  /** Filter on paste creation time. */
+  from: isoDatetime.optional(),
+  to: isoDatetime.optional(),
+})
+export type MineListQuery = z.infer<typeof mineListQuerySchema>
+
+const pageMeta = {
+  total: z.number().int().nonnegative(),
+  page: z.number().int().min(1),
+  pageSize: z.number().int().min(1),
+}
+
+export const myPasteListPageSchema = z.object({
+  ...pageMeta,
+  rows: z.array(myPasteItemSchema),
+})
+export type MyPasteListPage = z.infer<typeof myPasteListPageSchema>
+
+export const favoriteListPageSchema = z.object({
+  ...pageMeta,
+  rows: z.array(favoriteItemSchema),
+})
+export type FavoriteListPage = z.infer<typeof favoriteListPageSchema>
 
 export const pasteViewsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),

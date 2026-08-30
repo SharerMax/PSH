@@ -1,10 +1,15 @@
-import type { PasteViewsQuery } from '@psh/shared'
+import type { MineListQuery, PasteViewsQuery } from '@psh/shared'
 import type { Context } from 'hono'
+import { listUserFavorites } from '../services/favorite-service'
 import { getOwnedPasteById, listUserPastes } from '../services/paste-service'
 import { getStats, getViewsPage } from '../services/view-service'
 
-export function listMine(c: Context, userId: string): Response {
-  return c.json(listUserPastes(userId))
+export function listMine(c: Context, userId: string, query: MineListQuery): Response {
+  return c.json(listUserPastes(userId, query))
+}
+
+export function listFavorites(c: Context, userId: string, query: MineListQuery): Response {
+  return c.json(listUserFavorites(userId, query))
 }
 
 export function stats(c: Context, userId: string, id: number): Response {

@@ -1,4 +1,4 @@
-import type { ExpiryOption, MyPasteItem, PasteContent, PasteCreateInput, PasteMeta, PasteUpdateInput } from '@psh/shared'
+import type { ExpiryOption, MineListQuery, MyPasteListPage, PasteContent, PasteCreateInput, PasteMeta, PasteUpdateInput } from '@psh/shared'
 import type { NewPasteRow, PasteRow } from '../db/schema'
 import {
   decryptContent,
@@ -13,7 +13,7 @@ import {
   findPasteById,
   findPasteByLink,
   insertPaste,
-  listPastesByUserId,
+  listPastesPageByUserId,
   updatePasteById,
 } from '../repositories/paste-repository'
 import { getViewAggregate } from '../repositories/view-repository'
@@ -231,31 +231,36 @@ export function toContentPayload(row: PasteRow, content: string): PasteContent {
   }
 }
 
-/** List the user's pastes with view aggregates; lazily deletes expired rows. */
-export function listUserPastes(userId: string): MyPasteItem[] {
-  const rows = listPastesByUserId(userId)
-
-  const items: MyPasteItem[] = []
-  for (const row of rows) {
-    if (isExpired(row)) {
-      deletePasteById(row.id)
-      continue
-    }
-    const { views, lastViewedAt } = getViewAggregate(row.id)
-    items.push({
-      id: row.id,
-      link: row.link,
-      title: row.title,
-      language: row.language,
-      hasPassword: row.passwordHash !== null,
-      burnAfterRead: row.burnAfterRead,
-      createdAt: row.createdAt.toISOString(),
-      expiresAt: row.expiresAt ? row.expiresAt.toISOString() : null,
-      views,
-      lastViewedAt: lastViewedAt === null ? null : new Date(lastViewedAt).toISOString(),
-    })
+/** List the user's pastes (paginated, live only) with view aggregates. */
+export function listUserPastes(userId: string, query: MineListQuery): MyPasteListPage {
+  const filter = {
+    offset: (query.page - 1) * query.pageSize,
+    limit: query.pageSize,
+    q: query.q || undefined,
+    language: query.language || undefined,
+    from: query.from ? new Date(query.from) : undefined,
+    to: query.to ? new Date(query.to) : undefined,
   }
+  const { rows, total } = listPastesPageByUserId(userId, filter)
 
-  items.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-  return items
+  return {
+    total,
+    page: query.page,
+    pageSize: query.pageSize,
+    rows: rows.map((row) => {
+      const { views, lastViewedAt } = getViewAggregate(row.id)
+      return {
+        id: row.id,
+        link: row.link,
+        title: row.title,
+        language: row.language,
+        hasPassword: row.passwordHash !== null,
+        burnAfterRead: row.burnAfterRead,
+        createdAt: row.createdAt.toISOString(),
+        expiresAt: row.expiresAt ? row.expiresAt.toISOString() : null,
+        views,
+        lastViewedAt: lastViewedAt === null ? null : new Date(lastViewedAt).toISOString(),
+      }
+    }),
+  }
 }

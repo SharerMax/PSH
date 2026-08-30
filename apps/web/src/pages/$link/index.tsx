@@ -19,6 +19,7 @@ import { ApiError, getPasteContent, getPasteMeta } from '@/lib/api'
 import { useI18n } from '@/lib/i18n'
 import { ActionBar } from './components/ActionBar'
 import { CodeBlock } from './components/CodeBlock'
+import { FavoriteButton } from './components/FavoriteButton'
 import { PasteHeader } from './components/PasteHeader'
 
 export function PasteView() {
@@ -170,7 +171,10 @@ export function PasteView() {
 
         <Separator />
 
-        <ActionBar content={content} link={link} />
+        <div className="flex flex-wrap items-center gap-2">
+          <ActionBar content={content} link={link} />
+          <FavoriteButton link={link} />
+        </div>
 
         {locked
           ? (

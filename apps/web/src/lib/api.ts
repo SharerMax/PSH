@@ -1,6 +1,8 @@
-import type { AuthInput, MyPasteList, PasteContent, PasteCreatedResponse, PasteCreateInput, PasteMeta, PasteStats, PasteUpdateInput, PasteViewsPage, PasteViewsQuery, User } from '@psh/shared'
+import type { AuthInput, FavoriteListPage, FavoriteStatus, MineListQuery, MyPasteListPage, PasteContent, PasteCreatedResponse, PasteCreateInput, PasteMeta, PasteStats, PasteUpdateInput, PasteViewsPage, PasteViewsQuery, User } from '@psh/shared'
 import {
-  myPasteListSchema,
+  favoriteListPageSchema,
+  favoriteStatusSchema,
+  myPasteListPageSchema,
   pasteContentSchema,
   pasteCreatedResponseSchema,
   pasteMetaSchema,
@@ -91,8 +93,32 @@ export function getMe(): Promise<User> {
   return request('/api/auth/me', userSchema)
 }
 
-export function getMyPastes(): Promise<MyPasteList> {
-  return request('/api/mine', myPasteListSchema)
+function buildMineQuery(query: Partial<MineListQuery>): string {
+  const params = new URLSearchParams()
+  if (query.page) {
+    params.set('page', String(query.page))
+  }
+  if (query.pageSize) {
+    params.set('pageSize', String(query.pageSize))
+  }
+  if (query.q) {
+    params.set('q', query.q)
+  }
+  if (query.language) {
+    params.set('language', query.language)
+  }
+  if (query.from) {
+    params.set('from', query.from)
+  }
+  if (query.to) {
+    params.set('to', query.to)
+  }
+  return params.toString()
+}
+
+export function getMyPastes(query: Partial<MineListQuery>): Promise<MyPasteListPage> {
+  const qs = buildMineQuery(query)
+  return request(`/api/mine${qs ? `?${qs}` : ''}`, myPasteListPageSchema)
 }
 
 export function getPasteStats(id: number): Promise<PasteStats> {
@@ -141,4 +167,21 @@ export function updatePasteById(id: number, input: PasteUpdateInput): Promise<Pa
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   })
+}
+
+export function getFavoriteStatus(link: string): Promise<FavoriteStatus> {
+  return request(`/api/pastes/link/${link}/favorite`, favoriteStatusSchema)
+}
+
+export function favoritePaste(link: string): Promise<FavoriteStatus> {
+  return request(`/api/pastes/link/${link}/favorite`, favoriteStatusSchema, { method: 'POST' })
+}
+
+export function unfavoritePaste(link: string): Promise<FavoriteStatus> {
+  return request(`/api/pastes/link/${link}/favorite`, favoriteStatusSchema, { method: 'DELETE' })
+}
+
+export function getMyFavorites(query: Partial<MineListQuery>): Promise<FavoriteListPage> {
+  const qs = buildMineQuery(query)
+  return request(`/api/mine/favorites${qs ? `?${qs}` : ''}`, favoriteListPageSchema)
 }

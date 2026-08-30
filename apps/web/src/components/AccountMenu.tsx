@@ -1,5 +1,5 @@
-import { ClipboardListIcon, LogInIcon, LogOutIcon } from 'lucide-react'
-import { Link } from 'react-router'
+import { ClipboardListIcon, LogInIcon, LogOutIcon, StarIcon } from 'lucide-react'
+import { Link, useLocation } from 'react-router'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -17,6 +17,7 @@ import { useI18n } from '@/lib/i18n'
 export function AccountMenu() {
   const { user, logout } = useAuth()
   const { t } = useI18n()
+  const location = useLocation()
 
   if (!user) {
     return (
@@ -26,7 +27,12 @@ export function AccountMenu() {
         aria-label={t('nav.login')}
         title={t('nav.login')}
         nativeButton={false}
-        render={<Link to="/login" />}
+        render={(
+          <Link
+            to="/login"
+            state={{ from: `${location.pathname}${location.search}` }}
+          />
+        )}
       >
         <LogInIcon />
       </Button>
@@ -61,6 +67,10 @@ export function AccountMenu() {
           <DropdownMenuItem render={<Link to="/mine" />}>
             <ClipboardListIcon data-icon="inline-start" />
             {t('nav.myPastes')}
+          </DropdownMenuItem>
+          <DropdownMenuItem render={<Link to="/mine/favorites" />}>
+            <StarIcon data-icon="inline-start" />
+            {t('nav.myFavorites')}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleLogout}>
             <LogOutIcon data-icon="inline-start" />

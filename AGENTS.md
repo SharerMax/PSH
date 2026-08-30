@@ -68,10 +68,23 @@ variables:
   CC BY 4.0 — keep the attribution line).
 - Path alias `@/*` → `apps/web/src/*`.
 - **Pages are organized by route path**: `pages/home/`, `pages/login/`, `pages/mine/`,
-  `pages/mine/$id/`, `pages/mine/$id/stats/`, `pages/$link/` (dynamic segments use
-  `$param`), `pages/not-found/`. Each page dir has an `index.tsx` entry plus
-  page-scoped components in `components/`; shared across pages: `PasteDeleteDialog`,
-  `PasteUnlockDialog` in `src/components/`.
+  `pages/mine/$id/`, `pages/mine/$id/stats/`, `pages/mine/favorites/`, `pages/$link/`
+  (dynamic segments use `$param`), `pages/not-found/`. Each page dir has an `index.tsx`
+  entry plus page-scoped components in `components/`; shared across pages:
+  `PasteDeleteDialog`, `PasteUnlockDialog` in `src/components/`; `pages/mine/components/`
+  holds `ListFilters`/`ListPagination`/`useMineListFilters` reused by the "my pastes"
+  and "my favorites" lists.
+- **Login redirect flow**: every place that sends an anonymous user to `/login` passes the
+  originating path via router state (`state: { from: pathname + search }`) — header
+  `AccountMenu`, unauthenticated guards on owner pages, and the favorite button's
+  prompt toast. `AuthForm` jumps back to `state.from` after login/register (falls back to
+  a `?redirect=` query param, then `/mine`); validate internal paths (starts with `/`, not `//`).
+- **Base UI Select trigger labels**: the trigger renders the raw selected value unless the
+  `Select` root receives an `items` mapping (`{ value, label }[]` or record) — pass `items`
+  whenever value ≠ display label (e.g. numeric page sizes, "ALL" → "全部"). `SelectItem`'s
+  `label` prop is only for keyboard text navigation and does not affect the trigger.
+- Form submit handlers use `React.SubmitEvent<HTMLFormElement>` (types ≥19.2); the
+  `FormEvent` type is deprecated and must not be reintroduced.
 
 ### Backend (apps/server)
 
@@ -107,6 +120,16 @@ variables:
   `/api/mine/:id/stats`, and `/api/mine/:id/views` (integer-id addressing, paginated
   records with country/IP/time-range filters, schemas shared via
   `pasteViewsQuerySchema`/`pasteViewsPageSchema`).
+- **List pagination & filters**: `/api/mine` and `/api/mine/favorites` share
+  `mineListQuerySchema` (`page`, `pageSize` default 20 / max 100, `q` substring match on
+  title/link, `language`, `from`/`to` on paste creation time) and respond with
+  `total`/`page`/`pageSize`/`rows` (`myPasteListPageSchema`/`favoriteListPageSchema`).
+  Page queries only return live (unexpired) rows; expired-row cleanup stays with the
+  sweep, not the list queries.
+- **Favorites**: `favorites` table (`user_id` + `paste_id` composite PK, cascade on
+  delete). Public endpoints `GET/POST/DELETE /api/pastes/link/:link/favorite` — POST/DELETE
+  are idempotent; anonymous callers get 401 so the client can prompt login. Favorites of a
+  paste are removed by cascade when the paste row is deleted.
 - **View tracking**: every content read inserts a `paste_views` row (timestamp, IP,
   country) referencing the integer paste id. GeoIP lookup is in `lib/geoip.ts` —
   synchronous `mmdb-lib` reader initialized from `MMDB_PATH`; never make it async or move
@@ -143,7 +166,8 @@ variables:
 3. If server behavior changed: smoke test with `curl` against `localhost:3000`
    (`POST /api/pastes`, `/api/pastes/link/:link/meta`, `/api/pastes/id/:id/content?password=`,
    `/raw/link/:link`); for auth/owner features also cover register → login (cookie) →
-   create → `/api/mine` → stats/views → edit (by id or link)
+   create → `/api/mine` → stats/views → edit (by id or link) → favorites
+   (`/api/pastes/link/:link/favorite`, `/api/mine/favorites`)
 4. If web behavior changed: verify visually against the dev server on `:5173`
 
 ## External references

@@ -1,4 +1,5 @@
 import type { DateRange } from 'react-day-picker'
+import { PASTE_LANGUAGES } from '@psh/shared'
 import { enUS, zhCN } from 'date-fns/locale'
 import { CalendarIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -21,36 +22,32 @@ function toISOStringDate(date: Date): string {
   return `${y}-${m}-${d}`
 }
 
-interface FiltersBarProps {
-  country: string
-  onCountryChange: (value: string) => void
-  ipInput: string
-  onIpInputChange: (value: string) => void
-  rangeInput: DateRange | undefined
-  onRangeChange: (range: DateRange | undefined) => void
-  onApply: () => void
-  onReset: () => void
-  /** Country codes available for the dropdown filter. */
-  countries: string[]
-}
-
-export function FiltersBar({
-  country,
-  onCountryChange,
-  ipInput,
-  onIpInputChange,
+/** Shared filter bar for the "my pastes" / "my favorites" lists. */
+export function ListFilters({
+  qInput,
+  onQInputChange,
+  language,
+  onLanguageChange,
   rangeInput,
   onRangeChange,
   onApply,
   onReset,
-  countries,
-}: FiltersBarProps) {
+}: {
+  qInput: string
+  onQInputChange: (value: string) => void
+  language: string
+  onLanguageChange: (value: string) => void
+  rangeInput: DateRange | undefined
+  onRangeChange: (range: DateRange | undefined) => void
+  onApply: () => void
+  onReset: () => void
+}) {
   const { t, locale } = useI18n()
 
   // value -> label mapping so the trigger renders labels instead of raw values
-  const countryItems = [
+  const languageItems = [
     { value: 'ALL', label: t('stats.all') },
-    ...countries.map(code => ({ value: code, label: code })),
+    ...PASTE_LANGUAGES.map(lang => ({ value: lang, label: lang })),
   ]
 
   return (
@@ -62,29 +59,28 @@ export function FiltersBar({
       className="flex flex-wrap items-end gap-2"
       noValidate
     >
+      <div className="flex w-44 flex-col gap-1.5">
+        <span className="text-muted-foreground text-xs">{t('mine.filterTitle')}</span>
+        <Input
+          value={qInput}
+          onChange={e => onQInputChange(e.target.value)}
+          className="h-8"
+        />
+      </div>
       <div className="flex w-36 flex-col gap-1.5">
-        <span className="text-muted-foreground text-xs">{t('stats.filterCountry')}</span>
-        <Select items={countryItems} value={country} onValueChange={value => onCountryChange(value ?? 'ALL')}>
-          <SelectTrigger size="sm" className="w-full" aria-label={t('stats.filterCountry')}>
+        <span className="text-muted-foreground text-xs">{t('field.language')}</span>
+        <Select items={languageItems} value={language} onValueChange={value => onLanguageChange(value ?? 'ALL')}>
+          <SelectTrigger size="sm" className="w-full" aria-label={t('field.language')}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {countryItems.map(item => (
+            {languageItems.map(item => (
               <SelectItem key={item.value} value={item.value}>
                 {item.label}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-      </div>
-      <div className="flex w-36 flex-col gap-1.5">
-        <span className="text-muted-foreground text-xs">{t('stats.filterIp')}</span>
-        <Input
-          value={ipInput}
-          onChange={e => onIpInputChange(e.target.value)}
-          placeholder="8.8.8"
-          className="h-8"
-        />
       </div>
       <div className="flex flex-col gap-1.5">
         <span className="text-muted-foreground text-xs">{t('stats.dateRange')}</span>

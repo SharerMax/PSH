@@ -30,7 +30,7 @@ export function Home() {
     setOptions(prev => ({ ...prev, ...patch }))
   }
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!content.trim()) {
       toast.error(t('error.contentRequired'))

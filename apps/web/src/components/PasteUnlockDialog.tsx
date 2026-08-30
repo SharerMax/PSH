@@ -1,4 +1,4 @@
-import type { FormEvent } from 'react'
+import type { SubmitEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -33,7 +33,7 @@ export function PasteUnlockDialog({
 }: PasteUnlockDialogProps) {
   const { t } = useI18n()
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     onSubmit()
   }
