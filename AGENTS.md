@@ -176,8 +176,10 @@ and the dev script relies on the native `--watch` flag, so local dev/test config
   `allowBuilds.better-sqlite3: false`.
 - `.github/workflows/docker.yml` builds and pushes `ghcr.io/sharermax/psh` only on
   `v*` tag pushes (semver + `latest`) or manual `workflow_dispatch` (gets a `sha-*`
-  tag); regular pushes and PRs do not trigger image builds. Web build stage is pinned
-  to `$BUILDPLATFORM` so arm64 images don't run JS tooling under QEMU.
+  tag); regular pushes and PRs do not trigger image builds. Tag builds are followed
+  by a `release` job that creates the GitHub Release with auto-generated notes.
+  Web build stage is pinned to `$BUILDPLATFORM` so arm64 images don't run JS tooling
+  under QEMU.
 - Image builds run `vite build` directly — no `tsc` inside Docker; type checking happens
   via `pnpm typecheck` (local/CI) before publishing.
 
