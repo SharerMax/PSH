@@ -64,7 +64,14 @@ jobs:
       contents: write
 
     steps:
+      - name: Build Changelog
+        id: build_changelog
+        uses: mikepenz/release-changelog-builder-action@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create GitHub release
         uses: softprops/action-gh-release@v3
         with:
+          body: ${{ steps.build_changelog.outputs.changelog }}
           generate_release_notes: true
