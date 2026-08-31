@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs'
 import { getConnInfo } from '@hono/node-server/conninfo'
 import { Reader } from 'mmdb-lib'
 import { env } from '../env'
+import { logger } from './logger'
 
 const reader = loadReader()
 
@@ -15,7 +16,7 @@ function loadReader(): Reader<CountryResponse> | null {
     return new Reader<CountryResponse>(readFileSync(env.MMDB_PATH))
   }
   catch (error) {
-    console.error(`[geoip] failed to load mmdb file at ${env.MMDB_PATH}:`, error)
+    logger.error({ err: error, mmdbPath: env.MMDB_PATH }, 'failed to load mmdb file')
     return null
   }
 }

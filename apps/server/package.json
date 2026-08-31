@@ -19,6 +19,7 @@
     "hono": "catalog:",
     "mmdb-lib": "catalog:",
     "nanoid": "catalog:",
+    "pino": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
