@@ -47,6 +47,11 @@ ENV NODE_ENV=production \
   PORT=3000 \
   DATABASE_PATH=/app/data/psh.db
 
+# su-exec drops privileges in the entrypoint; apk is a plain C toolchain,
+# safe to run per-arch (no Node/JS under QEMU)
+RUN apk add --no-cache su-exec
+COPY --chmod=0755 docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+
 COPY --from=server-deps /app/node_modules /app/node_modules
 COPY --from=server-deps /app/apps/server/node_modules /app/apps/server/node_modules
 
@@ -59,11 +64,13 @@ RUN mkdir -p /app/data \
   && chown node:node /app/data
 
 WORKDIR /app/apps/server
-USER node
 EXPOSE 3000
 VOLUME ["/app/data"]
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD wget -qO/dev/null "http://127.0.0.1:${PORT}/" || exit 1
 
+# entrypoint starts as root, fixes /app/data ownership and drops to `node`;
+# the exec chain keeps SIGTERM reaching the node process directly
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["node", "dist/src/index.js"]

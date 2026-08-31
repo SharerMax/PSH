@@ -25,7 +25,8 @@ services:
       - psh-data:/app/data
       # To enable country stats, mount the .mmdb file (read-only) and set MMDB_PATH:
       # - ./mmdb:/mmdb:ro
-      # Alternatively a host directory (on Linux the dir must be writable by uid 1000):
+      # Alternatively a host directory (ownership is fixed automatically by
+      # the container entrypoint, no manual chown needed):
       # - ./data:/app/data
     restart: unless-stopped
     # healthcheck is defined in the Dockerfile and picked up automatically

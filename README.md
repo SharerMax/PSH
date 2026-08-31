@@ -76,7 +76,8 @@ docker compose up -d --build    # or: docker build -t psh .
 Notes:
 
 - The SQLite database lives in the `/app/data` volume — mount a named volume or host
-  directory there to persist pastes across upgrades (host binds must be writable by uid 1000)
+  directory there to persist pastes across upgrades; the entrypoint fixes the data
+  directory ownership on startup, so host binds work without a manual chown
 - Port/env overrides work the same as local runs (`PORT`, `DATABASE_PATH` defaults come
   baked into the image)
 - Country statistics (optional): mount a MaxMind `.mmdb` file into the container and
