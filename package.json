@@ -1,7 +1,7 @@
 {
   "name": "psh",
   "type": "module",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "scripts": {
     "dev": "pnpm --parallel --filter @psh/server --filter @psh/web dev",
