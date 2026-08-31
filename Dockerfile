@@ -36,9 +36,8 @@ COPY apps/web/package.json apps/web/
 RUN pnpm install --prod --frozen-lockfile --filter @psh/server...
 
 # ---------- stage 3: production runtime ----------
-# runs the compiled server bundle (tsx is dev-only) and keeps the workspace
-# layout: dist resolves the SPA at ../../web/dist and migrations at ../../drizzle
-# relative to dist/src, matching the source layout
+# runs the compiled server bundle (tsx is dev-only); the bundle resolves the
+# SPA at ../web/dist and migrations at drizzle relative to cwd (/app/apps/server)
 FROM base AS runtime
 LABEL org.opencontainers.image.title="psh" \
   org.opencontainers.image.description="Self-hosted pastebin-style snippet sharing service"

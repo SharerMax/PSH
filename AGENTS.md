@@ -155,9 +155,10 @@ and the dev script relies on the native `--watch` flag, so local dev/test config
 - **Server build**: `pnpm --filter @psh/server build` bundles `src/index.ts` into
   `dist/src/index.js` via esbuild (`build.mjs`) — `@psh/shared` TS is inlined, every real
   dependency stays external. `tsx` is dev-only (devDependencies): `dev` runs TS source,
-  `start`/Docker run the compiled bundle. The `dist/src` depth matches `src/` so the
-  `import.meta.dirname`-based `../../drizzle` and `../../web/dist` resolvers work in both
-  modes — keep that invariant when touching `build.mjs`.
+  `start`/Docker run the compiled bundle. Bundling collapses all modules into one file,
+  so path resolution for the web dist and drizzle folders is anchored to `process.cwd()`
+  (`apps/server` in dev/start/docker — same convention as the `DATABASE_PATH` default),
+  never `import.meta.dirname`; keep that when touching `app.ts`/`db/migrate.ts`/`build.mjs`.
 
 ### Shared package (packages/shared)
 
@@ -170,9 +171,9 @@ and the dev script relies on the native `--watch` flag, so local dev/test config
 ### Docker & CI
 
 - The runtime image preserves the pnpm workspace layout. Path resolution depends on it:
-  the server bundle at `apps/server/dist/src` resolves the SPA at `../../web/dist` and
-  migrations at `../../drizzle` (same depth as the TS sources, with `serveStatic` root
-  being cwd-relative). Do not flatten image paths without updating those resolvers.
+  the server resolves the SPA at `../web/dist` and migrations at `drizzle` relative to
+  its cwd (`/app/apps/server`, with `serveStatic` root being cwd-relative). Do not
+  flatten image paths without updating those resolvers.
 - JS tooling must never run under QEMU (Node 24 crashes with SIGILL on arm64): the
   `builder` and `server-deps` stages are pinned to `$BUILDPLATFORM`; the target-arch
   runtime stage only copies their outputs (`apps/web/dist`, `apps/server/dist`, and the
