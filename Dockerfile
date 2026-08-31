@@ -49,7 +49,7 @@ ENV NODE_ENV=production \
 # su-exec drops privileges in the entrypoint; apk is a plain C toolchain,
 # safe to run per-arch (no Node/JS under QEMU)
 RUN apk add --no-cache su-exec
-COPY --chmod=0755 docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY --chmod=0755 apps/server/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 COPY --from=server-deps /app/node_modules /app/node_modules
 COPY --from=server-deps /app/apps/server/node_modules /app/apps/server/node_modules
