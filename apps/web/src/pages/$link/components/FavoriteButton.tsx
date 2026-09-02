@@ -2,6 +2,15 @@ import { StarIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { toast } from 'sonner'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { ApiError, favoritePaste, getFavoriteStatus, unfavoritePaste } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
@@ -19,6 +28,7 @@ export function FavoriteButton({ link }: FavoriteButtonProps) {
 
   const [favorited, setFavorited] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [loginPromptOpen, setLoginPromptOpen] = useState(false)
 
   useEffect(() => {
     if (!user) {
@@ -44,10 +54,8 @@ export function FavoriteButton({ link }: FavoriteButtonProps) {
   }
 
   function handleUnauthenticated() {
-    // prompt first; navigating happens after the user confirms via the toast action
-    toast(t('view.favoriteNeedLogin'), {
-      action: { label: t('nav.login'), onClick: goToLogin },
-    })
+    // prompt first; navigating happens after the user confirms via the dialog action
+    setLoginPromptOpen(true)
   }
 
   async function handleToggle() {
@@ -77,15 +85,35 @@ export function FavoriteButton({ link }: FavoriteButtonProps) {
   }
 
   return (
-    <Button
-      size="sm"
-      variant="outline"
-      disabled={busy}
-      aria-pressed={favorited}
-      onClick={handleToggle}
-    >
-      <StarIcon data-icon="inline-start" className={favorited ? 'fill-current text-amber-500' : undefined} />
-      {favorited ? t('action.unfavorite') : t('action.favorite')}
-    </Button>
+    <>
+      <Button
+        size="sm"
+        variant="outline"
+        disabled={busy}
+        aria-pressed={favorited}
+        onClick={handleToggle}
+      >
+        <StarIcon data-icon="inline-start" className={favorited ? 'fill-current text-amber-500' : undefined} />
+        {favorited ? t('action.unfavorite') : t('action.favorite')}
+      </Button>
+      <AlertDialog open={loginPromptOpen} onOpenChange={setLoginPromptOpen}>
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('view.favoriteNeedLogin')}</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('action.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setLoginPromptOpen(false)
+                goToLogin()
+              }}
+            >
+              {t('action.login')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }
