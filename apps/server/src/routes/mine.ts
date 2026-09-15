@@ -25,7 +25,7 @@ export const mineRoutes = new Hono<UserEnv>()
     '/:id/stats',
     zValidator('param', pasteIdParamsSchema),
     (c) => {
-      return mine.stats(c, getUser(c).id, c.req.valid('param').id)
+      return mine.stats(c, getUser(c), c.req.valid('param').id)
     },
   )
   .get(
@@ -33,6 +33,6 @@ export const mineRoutes = new Hono<UserEnv>()
     zValidator('param', pasteIdParamsSchema),
     zValidator('query', pasteViewsQuerySchema),
     (c) => {
-      return mine.views(c, getUser(c).id, c.req.valid('param').id, c.req.valid('query'))
+      return mine.views(c, getUser(c), c.req.valid('param').id, c.req.valid('query'))
     },
   )
