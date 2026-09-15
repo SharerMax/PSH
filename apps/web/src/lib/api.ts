@@ -1,6 +1,7 @@
-import type { AdminPasteListPage, AdminUserListPage, AdminUserListQuery, AdminUserUpdateInput, AuthInput, ChangePasswordInput, FavoriteListPage, FavoriteStatus, MineListQuery, MyPasteListPage, PasteContent, PasteCreatedResponse, PasteCreateInput, PasteMeta, PasteStats, PasteUpdateInput, PasteViewsPage, PasteViewsQuery, User } from '@psh/shared'
+import type { AdminPasteListPage, AdminStats, AdminUserListPage, AdminUserListQuery, AdminUserUpdateInput, AuthInput, ChangePasswordInput, FavoriteListPage, FavoriteStatus, MineListQuery, MyPasteListPage, PasteContent, PasteCreatedResponse, PasteCreateInput, PasteMeta, PasteStats, PasteUpdateInput, PasteViewsPage, PasteViewsQuery, User } from '@psh/shared'
 import {
   adminPasteListPageSchema,
+  adminStatsSchema,
   adminUserListPageSchema,
   favoriteListPageSchema,
   favoriteStatusSchema,
@@ -230,4 +231,8 @@ export function getAdminPastes(query: Partial<MineListQuery>): Promise<AdminPast
 
 export function deleteAdminPaste(id: number): Promise<{ ok: boolean }> {
   return request(`/api/admin/pastes/id/${id}`, z.object({ ok: z.boolean() }), { method: 'DELETE' })
+}
+
+export function getAdminStats(): Promise<AdminStats> {
+  return request('/api/admin/stats', adminStatsSchema)
 }

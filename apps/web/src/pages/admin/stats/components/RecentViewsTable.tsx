@@ -1,0 +1,81 @@
+import type { AdminStats } from '@psh/shared'
+import { GlobeIcon } from 'lucide-react'
+import { Link } from 'react-router'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { useI18n } from '@/lib/i18n'
+
+type RecentRow = AdminStats['recent'][number]
+
+function formatDateTime(iso: string, locale: 'en' | 'zh'): string {
+  return new Date(iso).toLocaleString(locale === 'zh' ? 'zh-CN' : 'en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+export function RecentViewsTable({ rows }: { rows: RecentRow[] }) {
+  const { t, locale } = useI18n()
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t('admin.stats.recent')}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{t('stats.colTime')}</TableHead>
+              <TableHead>{t('admin.stats.colPaste')}</TableHead>
+              <TableHead>{t('admin.pastes.col.author')}</TableHead>
+              <TableHead>{t('stats.colIp')}</TableHead>
+              <TableHead>{t('stats.colCountry')}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} className="text-muted-foreground">
+                  {t('stats.noData')}
+                </TableCell>
+              </TableRow>
+            )}
+            {rows.map((row, index) => (
+              <TableRow key={`${row.pasteId}-${row.viewedAt}-${index}`}>
+                <TableCell className="whitespace-nowrap">{formatDateTime(row.viewedAt, locale)}</TableCell>
+                <TableCell className="max-w-48 truncate">
+                  <Link to={`/stats/${row.pasteId}`} className="hover:underline">
+                    {row.title ?? t('view.untitled')}
+                  </Link>
+                </TableCell>
+                <TableCell>{row.username ?? t('admin.pastes.anonymous')}</TableCell>
+                <TableCell className="font-mono text-xs">{row.ip ?? '—'}</TableCell>
+                <TableCell>
+                  <span className="inline-flex items-center gap-1">
+                    <GlobeIcon className="text-muted-foreground size-3" />
+                    {row.country}
+                  </span>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  )
+}
