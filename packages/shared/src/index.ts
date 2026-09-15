@@ -288,3 +288,32 @@ export const adminPasteListPageSchema = z.object({
   rows: z.array(adminPasteItemSchema),
 })
 export type AdminPasteListPage = z.infer<typeof adminPasteListPageSchema>
+
+/** Admin: site-wide statistics snapshot (counts, country map, recent views, top pastes). */
+export const adminStatsSchema = z.object({
+  users: z.number().int().nonnegative(),
+  pastes: z.number().int().nonnegative(),
+  totalViews: z.number().int().nonnegative(),
+  geoEnabled: z.boolean(),
+  byCountry: z.array(z.object({
+    country: z.string(),
+    count: z.number().int().nonnegative(),
+  })),
+  recent: z.array(z.object({
+    pasteId: z.number().int().nonnegative(),
+    link: z.string(),
+    title: z.string().nullable(),
+    username: z.string().nullable(),
+    viewedAt: z.string(),
+    ip: z.string().nullable(),
+    country: z.string(),
+  })),
+  topPastes: z.array(z.object({
+    id: z.number().int().nonnegative(),
+    link: z.string(),
+    title: z.string().nullable(),
+    username: z.string().nullable(),
+    views: z.number().int().nonnegative(),
+  })),
+})
+export type AdminStats = z.infer<typeof adminStatsSchema>
