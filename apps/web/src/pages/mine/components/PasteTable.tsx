@@ -115,7 +115,7 @@ function Row({
             size="icon-sm"
             variant="outline"
             nativeButton={false}
-            render={<Link to={`/mine/${item.id}/stats`} />}
+            render={<Link to={`/stats/${item.id}`} />}
             aria-label={t('stats.title')}
             title={t('stats.title')}
           >

@@ -250,7 +250,7 @@ export function PasteManage() {
               size="sm"
               variant="outline"
               nativeButton={false}
-              render={<Link to={`/mine/${id}/stats`} />}
+              render={<Link to={`/stats/${id}`} />}
             >
               {t('stats.title')}
             </Button>

@@ -45,7 +45,7 @@ export const router = createBrowserRouter([
     element: <PasteManage />,
   },
   {
-    path: '/mine/:id/stats',
+    path: '/stats/:id',
     element: <PasteStatsPage />,
   },
   {
