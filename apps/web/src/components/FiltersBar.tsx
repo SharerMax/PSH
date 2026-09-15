@@ -5,13 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { UserFilter } from '@/components/UserFilter'
 import { useI18n } from '@/lib/i18n'
 
 function toISOStringDate(date: Date): string {
@@ -32,6 +27,9 @@ interface FiltersBarProps {
   onReset: () => void
   /** Country codes available for the dropdown filter. */
   countries: string[]
+  /** Optional paste-author filter (admin access records only). */
+  user?: string | null
+  onUserChange?: (user: string | null) => void
 }
 
 export function FiltersBar({
@@ -44,6 +42,8 @@ export function FiltersBar({
   onApply,
   onReset,
   countries,
+  user,
+  onUserChange,
 }: FiltersBarProps) {
   const { t, locale } = useI18n()
 
@@ -62,6 +62,9 @@ export function FiltersBar({
       className="flex flex-wrap items-end gap-2"
       noValidate
     >
+      {onUserChange && (
+        <UserFilter value={user ?? null} onChange={onUserChange} />
+      )}
       <div className="flex w-36 flex-col gap-1.5">
         <span className="text-muted-foreground text-xs">{t('stats.filterCountry')}</span>
         <Select items={countryItems} value={country} onValueChange={value => onCountryChange(value ?? 'ALL')}>

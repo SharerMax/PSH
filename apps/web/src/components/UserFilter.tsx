@@ -35,29 +35,32 @@ export function UserFilter({
   }, [input])
 
   return (
-    <Combobox
-      items={options}
-      filter={null}
-      value={value}
-      onValueChange={next => onChange(next ?? null)}
-      onInputValueChange={setInput}
-    >
-      <ComboboxInput
-        className="w-44"
-        placeholder={t('admin.views.filterUser')}
-        aria-label={t('admin.views.filterUser')}
-        showClear
-      />
-      <ComboboxContent>
-        <ComboboxList>
-          {options.map(username => (
-            <ComboboxItem key={username} value={username}>
-              {username}
-            </ComboboxItem>
-          ))}
-          <ComboboxEmpty>{t('admin.views.noUsers')}</ComboboxEmpty>
-        </ComboboxList>
-      </ComboboxContent>
-    </Combobox>
+    <div className="flex w-36 flex-col gap-1.5">
+      <span className="text-muted-foreground text-xs">{t('admin.views.filterUser')}</span>
+      <Combobox
+        items={options}
+        filter={null}
+        value={value}
+        onValueChange={next => onChange(next ?? null)}
+        onInputValueChange={setInput}
+      >
+        <ComboboxInput
+          className="h-8"
+          placeholder={t('admin.views.filterUser')}
+          aria-label={t('admin.views.filterUser')}
+          showClear
+        />
+        <ComboboxContent>
+          <ComboboxList>
+            {options.map(username => (
+              <ComboboxItem key={username} value={username}>
+                {username}
+              </ComboboxItem>
+            ))}
+            <ComboboxEmpty>{t('admin.views.noUsers')}</ComboboxEmpty>
+          </ComboboxList>
+        </ComboboxContent>
+      </Combobox>
+    </div>
   )
 }

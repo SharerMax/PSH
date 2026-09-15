@@ -13,7 +13,6 @@ import { useI18n } from '@/lib/i18n'
 import { ListPagination } from '@/pages/mine/components/ListPagination'
 import { NotFound } from '@/pages/not-found'
 import { AdminViewsTable } from './components/AdminViewsTable'
-import { UserFilter } from './components/UserFilter'
 
 interface AppliedFilters {
   user: string | null
@@ -136,13 +135,6 @@ export function AdminViews() {
 
         <Separator />
 
-        <div className="flex flex-wrap items-end gap-2">
-          <div className="flex flex-col gap-1.5">
-            <span className="text-muted-foreground text-xs">{t('admin.views.filterUser')}</span>
-            <UserFilter value={applied.user} onChange={handleUserChange} />
-          </div>
-        </div>
-
         <FiltersBar
           country={country}
           onCountryChange={setCountry}
@@ -153,6 +145,8 @@ export function AdminViews() {
           onApply={handleApply}
           onReset={handleReset}
           countries={data?.countries ?? []}
+          user={applied.user}
+          onUserChange={handleUserChange}
         />
 
         {failed && (
