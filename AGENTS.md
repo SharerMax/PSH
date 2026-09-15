@@ -121,7 +121,8 @@ and the dev script relies on the native `--watch` flag, so local dev/test config
   gates ownership features. Owner-only endpoints: `PATCH /api/pastes/{link,id}/…` (edit
   content in place, link unchanged), `DELETE /api/pastes/id/:id` (owner delete),
   `/api/mine` (list, items carry both `id` and `link`),
-  `/api/mine/:id/stats`, and `/api/mine/:id/views` (integer-id addressing, paginated
+  `/api/stats/:id` (paste access statistics snapshot; admin may read any paste's), and
+  `/api/mine/:id/views` (integer-id addressing, paginated
   records with country/IP/time-range filters, schemas shared via
   `pasteViewsQuerySchema`/`pasteViewsPageSchema`).
 - **List pagination & filters**: `/api/mine` and `/api/mine/favorites` share

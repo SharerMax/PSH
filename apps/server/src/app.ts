@@ -8,6 +8,7 @@ import { adminRoutes } from './routes/admin'
 import { authRoutes, authUserRoutes } from './routes/auth'
 import { mineRoutes } from './routes/mine'
 import { apiRoutes, rawRoutes } from './routes/pastes'
+import { statsRoutes } from './routes/stats'
 
 function toPosix(p: string): string {
   return p.replaceAll(sep, '/')
@@ -22,6 +23,7 @@ export function createApp(): Hono {
   app.route('/api/auth', authUserRoutes)
   app.route('/api/mine', mineRoutes)
   app.route('/api/admin', adminRoutes)
+  app.route('/api/stats', statsRoutes)
   app.route('/raw', rawRoutes)
 
   // single-process deployment: host the built web client when present.
