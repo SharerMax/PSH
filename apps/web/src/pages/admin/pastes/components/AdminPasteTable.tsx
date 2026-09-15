@@ -1,5 +1,5 @@
 import type { AdminPasteItem } from '@psh/shared'
-import { FlameKindlingIcon, KeyRoundIcon, Trash2Icon, UserIcon } from 'lucide-react'
+import { ChartColumnIcon, FlameKindlingIcon, KeyRoundIcon, Trash2Icon, UserIcon } from 'lucide-react'
 import { Link } from 'react-router'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -109,16 +109,28 @@ function Row({
           : t('mine.neverViewed')}
       </TableCell>
       <TableCell className="text-right">
-        <Button
-          size="icon-sm"
-          variant="outline"
-          className="text-destructive hover:text-destructive"
-          aria-label={t('action.delete')}
-          title={t('action.delete')}
-          onClick={() => onDelete(item)}
-        >
-          <Trash2Icon />
-        </Button>
+        <div className="inline-flex items-center gap-2">
+          <Button
+            size="icon-sm"
+            variant="outline"
+            nativeButton={false}
+            render={<Link to={`/mine/${item.id}/stats`} />}
+            aria-label={t('stats.title')}
+            title={t('stats.title')}
+          >
+            <ChartColumnIcon />
+          </Button>
+          <Button
+            size="icon-sm"
+            variant="outline"
+            className="text-destructive hover:text-destructive"
+            aria-label={t('action.delete')}
+            title={t('action.delete')}
+            onClick={() => onDelete(item)}
+          >
+            <Trash2Icon />
+          </Button>
+        </div>
       </TableCell>
     </TableRow>
   )

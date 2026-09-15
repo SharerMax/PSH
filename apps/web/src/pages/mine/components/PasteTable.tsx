@@ -1,5 +1,5 @@
 import type { MyPasteItem } from '@psh/shared'
-import { FlameKindlingIcon, KeyRoundIcon, Trash2Icon } from 'lucide-react'
+import { ChartColumnIcon, FlameKindlingIcon, KeyRoundIcon, Trash2Icon } from 'lucide-react'
 import { Link } from 'react-router'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -110,6 +110,16 @@ function Row({
             render={<Link to={`/mine/${item.id}`} />}
           >
             {t('mine.manage')}
+          </Button>
+          <Button
+            size="icon-sm"
+            variant="outline"
+            nativeButton={false}
+            render={<Link to={`/mine/${item.id}/stats`} />}
+            aria-label={t('stats.title')}
+            title={t('stats.title')}
+          >
+            <ChartColumnIcon />
           </Button>
           <Button
             size="sm"
