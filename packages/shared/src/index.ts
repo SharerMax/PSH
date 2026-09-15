@@ -243,6 +243,24 @@ export const pasteViewsPageSchema = z.object({
 })
 export type PasteViewsPage = z.infer<typeof pasteViewsPageSchema>
 
+/** Admin: paginated site-wide view records with paste and author info. */
+export const adminViewsPageSchema = z.object({
+  total: z.number().int().nonnegative(),
+  page: z.number().int().min(1),
+  pageSize: z.number().int().min(1),
+  countries: z.array(z.string()),
+  rows: z.array(z.object({
+    pasteId: z.number().int().nonnegative(),
+    link: z.string(),
+    title: z.string().nullable(),
+    username: z.string().nullable(),
+    viewedAt: z.string(),
+    ip: z.string().nullable(),
+    country: z.string(),
+  })),
+})
+export type AdminViewsPage = z.infer<typeof adminViewsPageSchema>
+
 /** Admin: paginated user list with a username search. */
 export const adminUserListQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
