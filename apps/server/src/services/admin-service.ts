@@ -1,4 +1,4 @@
-import type { AdminPasteListPage, AdminStats, AdminUserListPage, AdminUserUpdateInput, MineListQuery } from '@psh/shared'
+import type { AdminPasteListPage, AdminStats, AdminUserListPage, AdminUserUpdateInput, MineListQuery, PasteViewsQuery } from '@psh/shared'
 import { db } from '../db'
 import { hashPassword } from '../lib/crypto'
 import { isGeoEnabled } from '../lib/geoip'
@@ -25,6 +25,7 @@ import {
   listRecentViewsGlobal,
   listTopPastesByViews,
 } from '../repositories/view-repository'
+import { getGlobalViewsPage } from './view-service'
 
 export function listUsers(query: { page: number, pageSize: number, q?: string }): AdminUserListPage {
   const { rows, total } = listUsersPage({
@@ -137,7 +138,7 @@ export function getAdminStats(): AdminStats {
     totalViews: countAllViews(),
     geoEnabled,
     byCountry: geoEnabled ? listAllCountryCounts() : [],
-    recent: listRecentViewsGlobal(20).map(row => ({
+    recent: listRecentViewsGlobal(10).map(row => ({
       pasteId: row.pasteId,
       link: row.link,
       title: row.title,
@@ -148,4 +149,9 @@ export function getAdminStats(): AdminStats {
     })),
     topPastes: listTopPastesByViews(10),
   }
+}
+
+/** Site-wide paginated access records for the admin views page. */
+export function getViewRecords(query: PasteViewsQuery) {
+  return getGlobalViewsPage(query)
 }

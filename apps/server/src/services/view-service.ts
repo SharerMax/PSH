@@ -1,4 +1,4 @@
-import type { PasteStats, PasteViewsPage, PasteViewsQuery } from '@psh/shared'
+import type { AdminViewsPage, PasteStats, PasteViewsPage, PasteViewsQuery } from '@psh/shared'
 import type { SQL } from 'drizzle-orm'
 import type { PasteRow } from '../db/schema'
 import { and, eq, gte, like, lte } from 'drizzle-orm'
@@ -9,6 +9,8 @@ import {
   getViewAggregate,
   insertPasteView,
   listCountryCounts,
+  listGlobalCountries,
+  listGlobalViews,
   listRecentViews,
   listViews,
 } from '../repositories/view-repository'
@@ -47,7 +49,25 @@ export function getStats(row: PasteRow): PasteStats {
 }
 
 export function getViewsPage(row: PasteRow, query: PasteViewsQuery): PasteViewsPage {
-  const conditions: SQL[] = [eq(pasteViews.pasteId, row.id)]
+  const where = and(eq(pasteViews.pasteId, row.id), ...filterConditions(query))
+
+  const total = countViews(where)
+  const rows = listViews(where, query.pageSize, (query.page - 1) * query.pageSize)
+
+  return {
+    total,
+    page: query.page,
+    pageSize: query.pageSize,
+    rows: rows.map(row => ({
+      viewedAt: row.viewedAt.toISOString(),
+      ip: row.ip,
+      country: row.country,
+    })),
+  }
+}
+
+function filterConditions(query: PasteViewsQuery): SQL[] {
+  const conditions: SQL[] = []
   if (query.country) {
     conditions.push(eq(pasteViews.country, query.country))
   }
@@ -60,16 +80,27 @@ export function getViewsPage(row: PasteRow, query: PasteViewsQuery): PasteViewsP
   if (query.to) {
     conditions.push(lte(pasteViews.viewedAt, new Date(query.to)))
   }
-  const where = and(...conditions)
+  return conditions
+}
+
+/** Site-wide paginated view records for the admin access log. */
+export function getGlobalViewsPage(query: PasteViewsQuery): AdminViewsPage {
+  const conditions = filterConditions(query)
+  const where = conditions.length > 0 ? and(...conditions) : undefined
 
   const total = countViews(where)
-  const rows = listViews(where, query.pageSize, (query.page - 1) * query.pageSize)
+  const rows = listGlobalViews(where, query.pageSize, (query.page - 1) * query.pageSize)
 
   return {
     total,
     page: query.page,
     pageSize: query.pageSize,
+    countries: isGeoEnabled() ? listGlobalCountries() : [],
     rows: rows.map(row => ({
+      pasteId: row.pasteId,
+      link: row.link,
+      title: row.title,
+      username: row.username,
       viewedAt: row.viewedAt.toISOString(),
       ip: row.ip,
       country: row.country,

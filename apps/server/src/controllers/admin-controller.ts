@@ -1,4 +1,4 @@
-import type { AdminUserListQuery, AdminUserUpdateInput, MineListQuery } from '@psh/shared'
+import type { AdminUserListQuery, AdminUserUpdateInput, MineListQuery, PasteViewsQuery } from '@psh/shared'
 import type { Context } from 'hono'
 import * as adminService from '../services/admin-service'
 
@@ -39,4 +39,8 @@ export function deletePaste(c: Context, id: number): Response {
 
 export function stats(c: Context): Response {
   return c.json(adminService.getAdminStats())
+}
+
+export function viewRecords(c: Context, query: PasteViewsQuery): Response {
+  return c.json(adminService.getViewRecords(query))
 }

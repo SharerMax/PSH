@@ -5,6 +5,7 @@ import {
   adminUserUpdateInputSchema,
   mineListQuerySchema,
   pasteIdParamsSchema,
+  pasteViewsQuerySchema,
 } from '@psh/shared'
 import { Hono } from 'hono'
 import * as admin from '../controllers/admin-controller'
@@ -32,6 +33,11 @@ export const adminRoutes = new Hono<UserEnv>()
     c => admin.listPastes(c, c.req.valid('query')),
   )
   .get('/stats', c => admin.stats(c))
+  .get(
+    '/stats/views',
+    zValidator('query', pasteViewsQuerySchema),
+    c => admin.viewRecords(c, c.req.valid('query')),
+  )
   .delete(
     '/pastes/id/:id',
     zValidator('param', pasteIdParamsSchema),

@@ -86,7 +86,14 @@ export function listAllCountryCounts(): { country: string, count: number }[] {
 }
 
 /** Most recent views with their paste and author, newest first. */
-export function listRecentViewsGlobal(limit: number): Array<{
+export function listRecentViewsGlobal(limit: number): GlobalViewRow[] {
+  return globalViewsQuery()
+    .orderBy(desc(pasteViews.viewedAt), desc(pasteViews.id))
+    .limit(limit)
+    .all()
+}
+
+export interface GlobalViewRow {
   pasteId: number
   link: string
   title: string | null
@@ -94,7 +101,9 @@ export function listRecentViewsGlobal(limit: number): Array<{
   viewedAt: Date
   ip: string | null
   country: string
-}> {
+}
+
+function globalViewsQuery() {
   return db
     .select({
       pasteId: pastes.id,
@@ -108,9 +117,26 @@ export function listRecentViewsGlobal(limit: number): Array<{
     .from(pasteViews)
     .innerJoin(pastes, eq(pasteViews.pasteId, pastes.id))
     .leftJoin(users, eq(pastes.userId, users.id))
+}
+
+/** Paginated site-wide view records, newest first. */
+export function listGlobalViews(where: SQL | undefined, limit: number, offset: number): GlobalViewRow[] {
+  return globalViewsQuery()
+    .where(where)
     .orderBy(desc(pasteViews.viewedAt), desc(pasteViews.id))
     .limit(limit)
+    .offset(offset)
     .all()
+}
+
+/** Distinct country codes recorded across all views, alphabetical. */
+export function listGlobalCountries(): string[] {
+  return db
+    .selectDistinct({ country: pasteViews.country })
+    .from(pasteViews)
+    .orderBy(pasteViews.country)
+    .all()
+    .map(row => row.country)
 }
 
 /** Top viewed pastes with the author username, most viewed first. */
