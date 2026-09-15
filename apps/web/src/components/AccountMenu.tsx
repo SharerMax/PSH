@@ -1,4 +1,4 @@
-import { ChartPieIcon, ClipboardListIcon, LogInIcon, LogOutIcon, Settings2Icon, StarIcon, UserRoundIcon } from 'lucide-react'
+import { ChartPieIcon, ClipboardListIcon, HistoryIcon, LogInIcon, LogOutIcon, Settings2Icon, StarIcon, UserRoundIcon } from 'lucide-react'
 import { Link, useLocation } from 'react-router'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -83,6 +83,10 @@ export function AccountMenu() {
               <DropdownMenuItem render={<Link to="/admin/stats" />}>
                 <ChartPieIcon data-icon="inline-start" />
                 {t('nav.adminStats')}
+              </DropdownMenuItem>
+              <DropdownMenuItem render={<Link to="/admin/views" />}>
+                <HistoryIcon data-icon="inline-start" />
+                {t('nav.adminViews')}
               </DropdownMenuItem>
               <DropdownMenuItem render={<Link to="/admin/users" />}>
                 <Settings2Icon data-icon="inline-start" />

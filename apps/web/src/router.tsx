@@ -3,6 +3,7 @@ import { PasteView } from '@/pages/$link'
 import { AdminPastes } from '@/pages/admin/pastes'
 import { AdminStats } from '@/pages/admin/stats'
 import { AdminUsers } from '@/pages/admin/users'
+import { AdminViews } from '@/pages/admin/views'
 import { Home } from '@/pages/home'
 import { Login } from '@/pages/login'
 import { MyPastes } from '@/pages/mine'
@@ -44,6 +45,10 @@ export const router = createBrowserRouter([
   {
     path: '/admin/stats',
     element: <AdminStats />,
+  },
+  {
+    path: '/admin/views',
+    element: <AdminViews />,
   },
   {
     path: '/mine/:id',

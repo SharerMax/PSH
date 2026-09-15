@@ -1,8 +1,9 @@
-import type { AdminPasteListPage, AdminStats, AdminUserListPage, AdminUserListQuery, AdminUserUpdateInput, AuthInput, ChangePasswordInput, FavoriteListPage, FavoriteStatus, MineListQuery, MyPasteListPage, PasteContent, PasteCreatedResponse, PasteCreateInput, PasteMeta, PasteStats, PasteUpdateInput, PasteViewsPage, PasteViewsQuery, User } from '@psh/shared'
+import type { AdminPasteListPage, AdminStats, AdminUserListPage, AdminUserListQuery, AdminUserUpdateInput, AdminViewsPage, AuthInput, ChangePasswordInput, FavoriteListPage, FavoriteStatus, MineListQuery, MyPasteListPage, PasteContent, PasteCreatedResponse, PasteCreateInput, PasteMeta, PasteStats, PasteUpdateInput, PasteViewsPage, PasteViewsQuery, User } from '@psh/shared'
 import {
   adminPasteListPageSchema,
   adminStatsSchema,
   adminUserListPageSchema,
+  adminViewsPageSchema,
   favoriteListPageSchema,
   favoriteStatusSchema,
   myPasteListPageSchema,
@@ -235,4 +236,23 @@ export function deleteAdminPaste(id: number): Promise<{ ok: boolean }> {
 
 export function getAdminStats(): Promise<AdminStats> {
   return request('/api/admin/stats', adminStatsSchema)
+}
+
+export function getAdminViews(query: PasteViewsQuery): Promise<AdminViewsPage> {
+  const params = new URLSearchParams()
+  params.set('page', String(query.page))
+  params.set('pageSize', String(query.pageSize))
+  if (query.country) {
+    params.set('country', query.country)
+  }
+  if (query.ip) {
+    params.set('ip', query.ip)
+  }
+  if (query.from) {
+    params.set('from', query.from)
+  }
+  if (query.to) {
+    params.set('to', query.to)
+  }
+  return request(`/api/admin/stats/views?${params.toString()}`, adminViewsPageSchema)
 }

@@ -1,13 +1,7 @@
-import type { AdminStats } from '@psh/shared'
+import type { AdminViewsPage } from '@psh/shared'
 import { GlobeIcon } from 'lucide-react'
 import { Link } from 'react-router'
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Table,
   TableBody,
@@ -18,10 +12,11 @@ import {
 } from '@/components/ui/table'
 import { useI18n } from '@/lib/i18n'
 
-type RecentRow = AdminStats['recent'][number]
+type Row = AdminViewsPage['rows'][number]
 
 function formatDateTime(iso: string, locale: 'en' | 'zh'): string {
   return new Date(iso).toLocaleString(locale === 'zh' ? 'zh-CN' : 'en-US', {
+    year: 'numeric',
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
@@ -29,19 +24,12 @@ function formatDateTime(iso: string, locale: 'en' | 'zh'): string {
   })
 }
 
-export function RecentViewsTable({ rows }: { rows: RecentRow[] }) {
+export function AdminViewsTable({ rows, showCountry }: { rows: Row[], showCountry: boolean }) {
   const { t, locale } = useI18n()
+  const colSpan = showCountry ? 5 : 4
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{t('admin.stats.recent')}</CardTitle>
-        <CardAction>
-          <Link to="/admin/views" className="text-muted-foreground hover:text-foreground text-sm hover:underline">
-            {t('admin.stats.allViews')}
-          </Link>
-        </CardAction>
-      </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
@@ -50,13 +38,13 @@ export function RecentViewsTable({ rows }: { rows: RecentRow[] }) {
               <TableHead>{t('admin.stats.colPaste')}</TableHead>
               <TableHead>{t('admin.pastes.col.author')}</TableHead>
               <TableHead>{t('stats.colIp')}</TableHead>
-              <TableHead>{t('stats.colCountry')}</TableHead>
+              {showCountry && <TableHead>{t('stats.colCountry')}</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="text-muted-foreground">
+                <TableCell colSpan={colSpan} className="text-muted-foreground">
                   {t('stats.noData')}
                 </TableCell>
               </TableRow>
@@ -68,15 +56,18 @@ export function RecentViewsTable({ rows }: { rows: RecentRow[] }) {
                   <Link to={`/stats/${row.pasteId}`} className="hover:underline">
                     {row.title ?? t('view.untitled')}
                   </Link>
+                  <span className="text-muted-foreground ml-2 font-mono text-xs">{row.link}</span>
                 </TableCell>
                 <TableCell>{row.username ?? t('admin.pastes.anonymous')}</TableCell>
                 <TableCell className="font-mono text-xs">{row.ip ?? '—'}</TableCell>
-                <TableCell>
-                  <span className="inline-flex items-center gap-1">
-                    <GlobeIcon className="text-muted-foreground size-3" />
-                    {row.country}
-                  </span>
-                </TableCell>
+                {showCountry && (
+                  <TableCell>
+                    <span className="inline-flex items-center gap-1">
+                      <GlobeIcon className="text-muted-foreground size-3" />
+                      {row.country}
+                    </span>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>
