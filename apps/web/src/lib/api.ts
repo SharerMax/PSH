@@ -133,7 +133,7 @@ export function getMyPastes(query: Partial<MineListQuery>): Promise<MyPasteListP
 }
 
 export function getPasteStats(id: number): Promise<PasteStats> {
-  return request(`/api/mine/${id}/stats`, pasteStatsSchema)
+  return request(`/api/stats/${id}`, pasteStatsSchema)
 }
 
 export function getPasteViews(id: number, query: Partial<PasteViewsQuery>): Promise<PasteViewsPage> {
