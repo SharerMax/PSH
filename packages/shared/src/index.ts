@@ -231,6 +231,12 @@ export const pasteViewsQuerySchema = z.object({
 })
 export type PasteViewsQuery = z.infer<typeof pasteViewsQuerySchema>
 
+/** Admin: site-wide view records query, extended with a paste-author filter. */
+export const adminViewsQuerySchema = pasteViewsQuerySchema.extend({
+  user: z.string().trim().min(1).max(64).optional(),
+})
+export type AdminViewsQuery = z.infer<typeof adminViewsQuerySchema>
+
 export const pasteViewsPageSchema = z.object({
   total: z.number().int().nonnegative(),
   page: z.number().int().min(1),
