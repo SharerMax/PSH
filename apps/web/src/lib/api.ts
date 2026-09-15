@@ -157,7 +157,7 @@ export function getPasteViews(id: number, query: Partial<PasteViewsQuery>): Prom
     params.set('to', query.to)
   }
   const qs = params.toString()
-  return request(`/api/mine/${id}/views${qs ? `?${qs}` : ''}`, pasteViewsPageSchema)
+  return request(`/api/stats/${id}/views${qs ? `?${qs}` : ''}`, pasteViewsPageSchema)
 }
 
 export function deletePasteById(id: number): Promise<{ ok: boolean }> {
