@@ -17,9 +17,12 @@ A self-hosted Pastebin-style snippet sharing service. Monorepo managed with pnpm
 - Anonymous or logged-in usage — accounts are only needed for owner features
 - User accounts: username/password registration, DB-backed sessions (HttpOnly cookie, 30 days); the first registered user automatically becomes the administrator
 - Profile page with password change (revokes sessions on other devices)
-- Admin: user management (search, ban/unban, reset password, delete) and paste
-  management (search/filter, delete) over all users' pastes; banned users cannot sign
-  in and their sessions are revoked immediately
+- Admin: user management (search, ban/unban, reset password, delete), paste
+  management (search/filter, delete) over all users' pastes, and site-wide statistics —
+  a dashboard (totals, world map, recent visits, top-10 pastes) plus a paginated
+  access-records page filterable by country, IP, date range and paste author (async
+  user search)
+- Banned users cannot sign in and their sessions are revoked immediately
 - Create pastes with optional title, syntax language, expiry (`10min/1h/1d/7d/forever`), password and burn-after-read
 - Optional custom link (4–32 chars, letters/digits/dots/dashes/underscores); otherwise an 8-char random link is generated
 - Password-protected pastes are stored AES-256-GCM encrypted (scrypt-derived key); passwords hashed with scrypt
@@ -145,8 +148,10 @@ resolves by link, `/id/:id` by integer id.
 | DELETE | `/api/admin/pastes/id/:id`            | Admin: delete any paste by integer id              |
 | GET    | `/api/mine`                           | Owner: list own pastes (`{ id, link, … }` items with view counts); paginated + filtered (`page`, `pageSize` (default 20, max 100), `q`, `language`, `from`, `to`) |
 | GET    | `/api/mine/favorites`                 | Owner: list favorited pastes; same pagination/filter params |
-| GET    | `/api/mine/:id/stats`                 | Owner: aggregate stats by integer id (views, last access, by country) |
-| GET    | `/api/mine/:id/views`                 | Owner: paginated access records (`page`, `pageSize`, `country`, `ip`, `from`, `to`) |
+| GET    | `/api/stats/:id`                      | Owner (admin: any paste): aggregate stats by integer id (views, last access, by country) |
+| GET    | `/api/stats/:id/views`                | Owner (admin: any paste): paginated access records (`page`, `pageSize`, `country`, `ip`, `from`, `to`) |
+| GET    | `/api/admin/stats`                    | Admin: site-wide snapshot — totals (users/pastes/views), per-country view counts, recent views, top-10 pastes |
+| GET    | `/api/admin/stats/views`              | Admin: site-wide access records; same pagination/filters as `/api/stats/:id/views` plus `user` (paste-author filter) |
 
 Create body:
 
