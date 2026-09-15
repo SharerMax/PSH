@@ -119,6 +119,18 @@ function globalViewsQuery() {
     .leftJoin(users, eq(pastes.userId, users.id))
 }
 
+/** Count of site-wide view records, join-aware (filterable by paste author). */
+export function countGlobalViews(where: SQL | undefined): number {
+  const [row] = db
+    .select({ count: sql<number>`count(*)`.mapWith(Number) })
+    .from(pasteViews)
+    .innerJoin(pastes, eq(pasteViews.pasteId, pastes.id))
+    .leftJoin(users, eq(pastes.userId, users.id))
+    .where(where)
+    .all()
+  return row?.count ?? 0
+}
+
 /** Paginated site-wide view records, newest first. */
 export function listGlobalViews(where: SQL | undefined, limit: number, offset: number): GlobalViewRow[] {
   return globalViewsQuery()

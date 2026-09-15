@@ -1,4 +1,4 @@
-import type { AdminPasteListPage, AdminStats, AdminUserListPage, AdminUserUpdateInput, MineListQuery, PasteViewsQuery } from '@psh/shared'
+import type { AdminPasteListPage, AdminStats, AdminUserListPage, AdminUserUpdateInput, AdminViewsQuery, MineListQuery } from '@psh/shared'
 import { db } from '../db'
 import { hashPassword } from '../lib/crypto'
 import { isGeoEnabled } from '../lib/geoip'
@@ -152,6 +152,6 @@ export function getAdminStats(): AdminStats {
 }
 
 /** Site-wide paginated access records for the admin views page. */
-export function getViewRecords(query: PasteViewsQuery) {
+export function getViewRecords(query: AdminViewsQuery) {
   return getGlobalViewsPage(query)
 }

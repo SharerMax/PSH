@@ -3,9 +3,9 @@ import { zValidator } from '@hono/zod-validator'
 import {
   adminUserListQuerySchema,
   adminUserUpdateInputSchema,
+  adminViewsQuerySchema,
   mineListQuerySchema,
   pasteIdParamsSchema,
-  pasteViewsQuerySchema,
 } from '@psh/shared'
 import { Hono } from 'hono'
 import * as admin from '../controllers/admin-controller'
@@ -35,7 +35,7 @@ export const adminRoutes = new Hono<UserEnv>()
   .get('/stats', c => admin.stats(c))
   .get(
     '/stats/views',
-    zValidator('query', pasteViewsQuerySchema),
+    zValidator('query', adminViewsQuerySchema),
     c => admin.viewRecords(c, c.req.valid('query')),
   )
   .delete(

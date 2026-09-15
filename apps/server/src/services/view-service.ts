@@ -1,10 +1,11 @@
-import type { AdminViewsPage, PasteStats, PasteViewsPage, PasteViewsQuery } from '@psh/shared'
+import type { AdminViewsPage, AdminViewsQuery, PasteStats, PasteViewsPage, PasteViewsQuery } from '@psh/shared'
 import type { SQL } from 'drizzle-orm'
 import type { PasteRow } from '../db/schema'
 import { and, eq, gte, like, lte } from 'drizzle-orm'
-import { pasteViews } from '../db/schema'
+import { pasteViews, users } from '../db/schema'
 import { countryForIp, isGeoEnabled } from '../lib/geoip'
 import {
+  countGlobalViews,
   countViews,
   getViewAggregate,
   insertPasteView,
@@ -84,11 +85,15 @@ function filterConditions(query: PasteViewsQuery): SQL[] {
 }
 
 /** Site-wide paginated view records for the admin access log. */
-export function getGlobalViewsPage(query: PasteViewsQuery): AdminViewsPage {
+export function getGlobalViewsPage(query: AdminViewsQuery): AdminViewsPage {
   const conditions = filterConditions(query)
+  if (query.user) {
+    // views of pastes authored by the given user; anonymous pastes never match
+    conditions.push(eq(users.username, query.user))
+  }
   const where = conditions.length > 0 ? and(...conditions) : undefined
 
-  const total = countViews(where)
+  const total = countGlobalViews(where)
   const rows = listGlobalViews(where, query.pageSize, (query.page - 1) * query.pageSize)
 
   return {
