@@ -68,7 +68,7 @@ and the dev script relies on the native `--watch` flag, so local dev/test config
   CC BY 4.0 — keep the attribution line).
 - Path alias `@/*` → `apps/web/src/*`.
 - **Pages are organized by route path**: `pages/home/`, `pages/login/`, `pages/mine/`,
-  `pages/mine/$id/`, `pages/mine/$id/stats/`, `pages/mine/favorites/`, `pages/profile/`,
+  `pages/mine/$id/`, `pages/stats/$id/`, `pages/mine/favorites/`, `pages/profile/`,
   `pages/admin/users/`, `pages/admin/pastes/`, `pages/$link/`
   (dynamic segments use `$param`), `pages/not-found/`. Each page dir has an `index.tsx`
   entry plus page-scoped components in `components/`; shared across pages:

@@ -6,10 +6,10 @@ import { Home } from '@/pages/home'
 import { Login } from '@/pages/login'
 import { MyPastes } from '@/pages/mine'
 import { PasteManage } from '@/pages/mine/$id'
-import { PasteStatsPage } from '@/pages/mine/$id/stats'
 import { MyFavorites } from '@/pages/mine/favorites'
 import { NotFound } from '@/pages/not-found'
 import { Profile } from '@/pages/profile'
+import { PasteStatsPage } from '@/pages/stats/$id'
 
 export const router = createBrowserRouter([
   {
