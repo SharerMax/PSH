@@ -120,11 +120,11 @@ and the dev script relies on the native `--watch` flag, so local dev/test config
   `middleware/auth.ts`. Anonymous use of all paste endpoints is unaffected — auth only
   gates ownership features. Owner-only endpoints: `PATCH /api/pastes/{link,id}/…` (edit
   content in place, link unchanged), `DELETE /api/pastes/id/:id` (owner delete),
-  `/api/mine` (list, items carry both `id` and `link`),
-  `/api/stats/:id` (paste access statistics snapshot; admin may read any paste's), and
-  `/api/mine/:id/views` (integer-id addressing, paginated
-  records with country/IP/time-range filters, schemas shared via
-  `pasteViewsQuerySchema`/`pasteViewsPageSchema`).
+  `/api/mine` (list, items carry both `id` and `link`), and
+  `/api/stats/:id` + `/api/stats/:id/views` (paste access statistics snapshot and
+  paginated view records with country/IP/time-range filters; integer-id addressing,
+  schemas shared via `pasteViewsQuerySchema`/`pasteViewsPageSchema`;
+  admin may read any paste's stats, regular users only their own).
 - **List pagination & filters**: `/api/mine` and `/api/mine/favorites` share
   `mineListQuerySchema` (`page`, `pageSize` default 20 / max 100, `q` substring match on
   title/link, `language`, `from`/`to` on paste creation time) and respond with
