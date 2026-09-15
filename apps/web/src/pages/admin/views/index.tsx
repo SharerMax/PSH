@@ -13,15 +13,17 @@ import { useI18n } from '@/lib/i18n'
 import { ListPagination } from '@/pages/mine/components/ListPagination'
 import { NotFound } from '@/pages/not-found'
 import { AdminViewsTable } from './components/AdminViewsTable'
+import { UserFilter } from './components/UserFilter'
 
 interface AppliedFilters {
+  user: string | null
   country: string
   ip: string
   from: string
   to: string
 }
 
-const NO_FILTERS: AppliedFilters = { country: 'ALL', ip: '', from: '', to: '' }
+const NO_FILTERS: AppliedFilters = { user: null, country: 'ALL', ip: '', from: '', to: '' }
 
 function toISOStringDate(date: Date): string {
   const y = date.getFullYear()
@@ -59,6 +61,7 @@ export function AdminViews() {
     getAdminViews({
       page,
       pageSize,
+      user: applied.user || undefined,
       country: applied.country === 'ALL' ? undefined : applied.country,
       ip: applied.ip || undefined,
       from: applied.from || undefined,
@@ -81,12 +84,13 @@ export function AdminViews() {
   }, [user, page, pageSize, applied])
 
   function handleApply() {
-    setApplied({
+    setApplied(prev => ({
+      ...prev,
       country,
       ip: ipInput.trim(),
       from: rangeInput?.from ? `${toISOStringDate(rangeInput.from)}T00:00:00` : '',
       to: rangeInput?.to ? `${toISOStringDate(rangeInput.to)}T23:59:59` : '',
-    })
+    }))
     setPage(1)
   }
 
@@ -95,6 +99,11 @@ export function AdminViews() {
     setIpInput('')
     setRangeInput(undefined)
     setApplied(NO_FILTERS)
+    setPage(1)
+  }
+
+  function handleUserChange(user: string | null) {
+    setApplied(prev => ({ ...prev, user }))
     setPage(1)
   }
 
@@ -126,6 +135,13 @@ export function AdminViews() {
         </header>
 
         <Separator />
+
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="flex flex-col gap-1.5">
+            <span className="text-muted-foreground text-xs">{t('admin.views.filterUser')}</span>
+            <UserFilter value={applied.user} onChange={handleUserChange} />
+          </div>
+        </div>
 
         <FiltersBar
           country={country}

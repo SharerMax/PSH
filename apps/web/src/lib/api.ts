@@ -1,4 +1,4 @@
-import type { AdminPasteListPage, AdminStats, AdminUserListPage, AdminUserListQuery, AdminUserUpdateInput, AdminViewsPage, AuthInput, ChangePasswordInput, FavoriteListPage, FavoriteStatus, MineListQuery, MyPasteListPage, PasteContent, PasteCreatedResponse, PasteCreateInput, PasteMeta, PasteStats, PasteUpdateInput, PasteViewsPage, PasteViewsQuery, User } from '@psh/shared'
+import type { AdminPasteListPage, AdminStats, AdminUserListPage, AdminUserListQuery, AdminUserUpdateInput, AdminViewsPage, AdminViewsQuery, AuthInput, ChangePasswordInput, FavoriteListPage, FavoriteStatus, MineListQuery, MyPasteListPage, PasteContent, PasteCreatedResponse, PasteCreateInput, PasteMeta, PasteStats, PasteUpdateInput, PasteViewsPage, PasteViewsQuery, User } from '@psh/shared'
 import {
   adminPasteListPageSchema,
   adminStatsSchema,
@@ -238,10 +238,13 @@ export function getAdminStats(): Promise<AdminStats> {
   return request('/api/admin/stats', adminStatsSchema)
 }
 
-export function getAdminViews(query: PasteViewsQuery): Promise<AdminViewsPage> {
+export function getAdminViews(query: AdminViewsQuery): Promise<AdminViewsPage> {
   const params = new URLSearchParams()
   params.set('page', String(query.page))
   params.set('pageSize', String(query.pageSize))
+  if (query.user) {
+    params.set('user', query.user)
+  }
   if (query.country) {
     params.set('country', query.country)
   }
