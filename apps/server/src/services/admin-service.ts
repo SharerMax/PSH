@@ -1,7 +1,9 @@
-import type { AdminPasteListPage, AdminUserListPage, AdminUserUpdateInput, MineListQuery } from '@psh/shared'
+import type { AdminPasteListPage, AdminStats, AdminUserListPage, AdminUserUpdateInput, MineListQuery } from '@psh/shared'
 import { db } from '../db'
 import { hashPassword } from '../lib/crypto'
+import { isGeoEnabled } from '../lib/geoip'
 import {
+  countLivePastes,
   deletePasteById,
   deletePastesByUserId,
   findPasteById,
@@ -9,13 +11,20 @@ import {
 } from '../repositories/paste-repository'
 import { deleteAllUserSessions } from '../repositories/session-repository'
 import {
+  countUsers,
   deleteUser as deleteUserById,
   findUserById,
   listUsersPage,
   updateUserBanned,
   updateUserPassword,
 } from '../repositories/user-repository'
-import { getViewAggregate } from '../repositories/view-repository'
+import {
+  countAllViews,
+  getViewAggregate,
+  listAllCountryCounts,
+  listRecentViewsGlobal,
+  listTopPastesByViews,
+} from '../repositories/view-repository'
 
 export function listUsers(query: { page: number, pageSize: number, q?: string }): AdminUserListPage {
   const { rows, total } = listUsersPage({
@@ -117,4 +126,26 @@ export function deletePaste(id: number): boolean {
   }
   deletePasteById(id)
   return true
+}
+
+/** Site-wide statistics snapshot for the admin dashboard. */
+export function getAdminStats(): AdminStats {
+  const geoEnabled = isGeoEnabled()
+  return {
+    users: countUsers(),
+    pastes: countLivePastes(),
+    totalViews: countAllViews(),
+    geoEnabled,
+    byCountry: geoEnabled ? listAllCountryCounts() : [],
+    recent: listRecentViewsGlobal(20).map(row => ({
+      pasteId: row.pasteId,
+      link: row.link,
+      title: row.title,
+      username: row.username,
+      viewedAt: row.viewedAt.toISOString(),
+      ip: row.ip,
+      country: row.country,
+    })),
+    topPastes: listTopPastesByViews(10),
+  }
 }

@@ -1,8 +1,8 @@
 import type { SQL } from 'drizzle-orm'
 import type { PasteViewRow } from '../db/schema'
-import { desc, eq, sql } from 'drizzle-orm'
+import { count, desc, eq, sql } from 'drizzle-orm'
 import { db } from '../db'
-import { pasteViews } from '../db/schema'
+import { pastes, pasteViews, users } from '../db/schema'
 
 export interface ViewAggregate {
   views: number
@@ -66,4 +66,74 @@ export function listViews(where: SQL | undefined, limit: number, offset: number)
 
 export function listRecentViews(pasteId: number, limit: number): PasteViewRow[] {
   return listViews(eq(pasteViews.pasteId, pasteId), limit, 0)
+}
+
+export function countAllViews(): number {
+  return db.select({ value: count() }).from(pasteViews).all()[0]?.value ?? 0
+}
+
+/** Country distribution across all pastes, most viewed first. */
+export function listAllCountryCounts(): { country: string, count: number }[] {
+  return db
+    .select({
+      country: pasteViews.country,
+      count: sql<number>`count(*)`.mapWith(Number),
+    })
+    .from(pasteViews)
+    .groupBy(pasteViews.country)
+    .orderBy(desc(sql`count(*)`))
+    .all()
+}
+
+/** Most recent views with their paste and author, newest first. */
+export function listRecentViewsGlobal(limit: number): Array<{
+  pasteId: number
+  link: string
+  title: string | null
+  username: string | null
+  viewedAt: Date
+  ip: string | null
+  country: string
+}> {
+  return db
+    .select({
+      pasteId: pastes.id,
+      link: pastes.link,
+      title: pastes.title,
+      username: users.username,
+      viewedAt: pasteViews.viewedAt,
+      ip: pasteViews.ip,
+      country: pasteViews.country,
+    })
+    .from(pasteViews)
+    .innerJoin(pastes, eq(pasteViews.pasteId, pastes.id))
+    .leftJoin(users, eq(pastes.userId, users.id))
+    .orderBy(desc(pasteViews.viewedAt), desc(pasteViews.id))
+    .limit(limit)
+    .all()
+}
+
+/** Top viewed pastes with the author username, most viewed first. */
+export function listTopPastesByViews(limit: number): Array<{
+  id: number
+  link: string
+  title: string | null
+  username: string | null
+  views: number
+}> {
+  return db
+    .select({
+      id: pastes.id,
+      link: pastes.link,
+      title: pastes.title,
+      username: users.username,
+      views: sql<number>`count(*)`.mapWith(Number),
+    })
+    .from(pasteViews)
+    .innerJoin(pastes, eq(pasteViews.pasteId, pastes.id))
+    .leftJoin(users, eq(pastes.userId, users.id))
+    .groupBy(pastes.id, pastes.link, pastes.title, users.username)
+    .orderBy(desc(sql`count(*)`))
+    .limit(limit)
+    .all()
 }

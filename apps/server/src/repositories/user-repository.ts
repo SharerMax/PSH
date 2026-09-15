@@ -15,6 +15,10 @@ export function existsAnyUser(): boolean {
   return db.select({ id: users.id }).from(users).limit(1).all().length > 0
 }
 
+export function countUsers(): number {
+  return db.select({ value: count() }).from(users).all()[0]?.value ?? 0
+}
+
 export function insertUser(values: NewUserRow): void {
   db.insert(users).values(values).run()
 }

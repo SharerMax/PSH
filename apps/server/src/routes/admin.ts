@@ -31,6 +31,7 @@ export const adminRoutes = new Hono<UserEnv>()
     zValidator('query', mineListQuerySchema),
     c => admin.listPastes(c, c.req.valid('query')),
   )
+  .get('/stats', c => admin.stats(c))
   .delete(
     '/pastes/id/:id',
     zValidator('param', pasteIdParamsSchema),

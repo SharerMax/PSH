@@ -36,3 +36,7 @@ export function deletePaste(c: Context, id: number): Response {
   }
   return c.json({ ok: true })
 }
+
+export function stats(c: Context): Response {
+  return c.json(adminService.getAdminStats())
+}

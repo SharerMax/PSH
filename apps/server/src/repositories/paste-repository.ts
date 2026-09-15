@@ -133,3 +133,13 @@ export function listPastesPageForAdmin(filter: PastePageFilter): { rows: Array<{
 export function deletePastesByUserId(userId: string): void {
   db.delete(pastes).where(eq(pastes.userId, userId)).run()
 }
+
+/** Number of live (unexpired) pastes. */
+export function countLivePastes(): number {
+  return db
+    .select({ value: count() })
+    .from(pastes)
+    .where(or(isNull(pastes.expiresAt), gt(pastes.expiresAt, new Date())))
+    .all()[0]
+    ?.value ?? 0
+}
